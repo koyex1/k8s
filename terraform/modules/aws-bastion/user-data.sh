@@ -1,0 +1,178 @@
+#!/bin/bash
+set -e
+
+apt update -y
+
+# Core tools
+apt install -y \
+  curl \
+  unzip \
+  git \
+  docker.io \
+  jq
+
+systemctl enable docker
+systemctl start docker
+
+# AWS CLI
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+./aws/install
+
+# kubectl
+curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.0/bin/linux/amd64/kubectl
+chmod +x kubectl
+mv kubectl /usr/local/bin/
+
+# Helm
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+# Terraform
+curl -LO https://releases.hashicorp.com/terraform/1.7.5/terraform_1.7.5_linux_amd64.zip
+unzip terraform_1.7.5_linux_amd64.zip
+mv terraform /usr/local/bin/
+
+# ArgoCD CLI
+curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+chmod +x argocd
+mv argocd /usr/local/bin/
+
+# kubectl autocompletion
+echo "source <(kubectl completion bash)" >> ~/.bashrc
+
+# Docker group
+usermod -aG docker ubuntu
+
+echo "Bastion ready"
+
+
+# #!/bin/bash
+# set -euxo pipefail
+
+# export DEBIAN_FRONTEND=noninteractive
+
+# ############################################
+# # System Update & Base Packages
+# ############################################
+# apt-get update -y
+# apt-get upgrade -y
+
+# apt-get install -y \
+#   curl \
+#   git \
+#   jq \
+#   ca-certificates \
+#   gnupg \
+#   lsb-release \
+#   bash-completion \
+#   apt-transport-https \
+#   unzip
+
+
+# ############################################
+# # Install AWS CLI v2
+# ############################################
+
+# # Download AWS CLI v2
+# curl -fsSL https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o /tmp/awscliv2.zip
+
+# # Unzip
+# unzip -q /tmp/awscliv2.zip -d /tmp
+
+# # Install (idempotent)
+# if ! command -v aws &>/dev/null; then
+#   /tmp/aws/install
+# fi
+
+# # Cleanup
+# rm -rf /tmp/aws /tmp/awscliv2.zip
+
+# # Verify
+# aws --version
+
+# ############################################
+# # Install kubectl (Official Kubernetes Repo)
+# ############################################
+# mkdir -p /etc/apt/keyrings
+
+# curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.33/deb/Release.key \
+#   | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+# chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+# echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] \
+# https://pkgs.k8s.io/core:/stable:/v1.33/deb/ /" \
+# | tee /etc/apt/sources.list.d/kubernetes.list
+
+# apt-get update -y
+# apt-get install -y kubectl
+
+# ############################################
+# # kubectl Completion & Alias (Persistent)
+# ############################################
+# cat <<'EOF' >/etc/profile.d/kubectl.sh
+# source <(kubectl completion bash)
+# alias k=kubectl
+# complete -F __start_kubectl k
+# EOF
+
+# chmod +x /etc/profile.d/kubectl.sh
+
+# ############################################
+# # Install eksctl
+# ############################################
+# ARCH=amd64
+# PLATFORM="$(uname -s)_${ARCH}"
+
+# curl -sLO "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_${PLATFORM}.tar.gz"
+
+# curl -sL "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_checksums.txt" \
+#   | grep "${PLATFORM}" | sha256sum --check -
+
+# tar -xzf eksctl_${PLATFORM}.tar.gz -C /tmp
+# install -m 0755 /tmp/eksctl /usr/local/bin/eksctl
+
+# rm -f eksctl_${PLATFORM}.tar.gz /tmp/eksctl
+
+# ############################################
+# # eksctl Completion & Alias
+# ############################################
+# cat <<'EOF' >/etc/profile.d/eksctl.sh
+# source <(eksctl completion bash)
+# alias e=eksctl
+# complete -F __start_eksctl e
+# EOF
+
+# chmod +x /etc/profile.d/eksctl.sh
+
+# ############################################
+# # Install Helm (Official Repo)
+# ############################################
+# curl -fsSL https://packages.buildkite.com/helm-linux/helm-debian/gpgkey \
+#   | gpg --dearmor -o /usr/share/keyrings/helm.gpg
+
+# chmod 644 /usr/share/keyrings/helm.gpg
+
+# echo "deb [signed-by=/usr/share/keyrings/helm.gpg] \
+# https://packages.buildkite.com/helm-linux/helm-debian/any/ any main" \
+# | tee /etc/apt/sources.list.d/helm-stable-debian.list
+
+# sudo apt-get update -y
+# sudo apt-get install -y helm
+
+# ############################################
+# # Helm Completion & Alias
+# ############################################
+# cat <<'EOF' >/etc/profile.d/helm.sh
+# source <(helm completion bash)
+# alias h=helm
+# complete -F __start_helm h
+# EOF
+
+# chmod +x /etc/profile.d/helm.sh
+
+# ############################################
+# # Done
+# ############################################
+# echo "kubectl, eksctl, and helm installed successfully"
+

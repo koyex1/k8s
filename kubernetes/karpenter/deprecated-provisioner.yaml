@@ -1,0 +1,21 @@
+apiVersion: karpenter.sh/v1beta1
+kind: Provisioner
+metadata:
+  name: default
+spec:
+  ttlSecondsAfterEmpty: 30 # Terminate nodes after 30 seconds of being empty.
+
+  requirements:
+    - key: "kubernetes.io/arch"
+      operator: In
+      values: ["spot", "on-demand"] #Allow both spot and on-demand instances. such that karpenter can choose the best option based on current cluster state and cost.
+  
+  limits:
+    resources:
+      cpu: "100" # Limit the total CPU resources that can be provisioned by this provisioner to 100. This helps prevent over-provisioning and ensures that the cluster does not exceed a certain capacity.  
+
+  provider:
+    instanceProfile: KarpenterNodeInstanceProfile # Specify the instance profile to use for the provisioned nodes. This profile should have the necessary permissions to allow Karpenter to manage the nodes effectively.
+  
+  consolidation:
+    enabled: true # Enable consolidation to allow Karpenter to optimize the cluster by consolidating workloads onto fewer nodes when possible, which can help reduce costs and improve resource utilization.
