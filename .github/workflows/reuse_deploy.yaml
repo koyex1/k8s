@@ -12,7 +12,8 @@ on:
         type: string
 
 
-deploy:
+jobs:
+  deploy:
     defaults:
       run:
         working-directory: ${{ inputs.service-path }}
@@ -25,11 +26,11 @@ deploy:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            docker pull ${{vars.IMAGE_NAME}}:latest #tha
-            docker stop app || true
-            docker rm app || true
-            docker run -d \
-              --name app \
-              -p 4000:4000 \
-              --restart unless-stopped \
-              ${{vars.IMAGE_NAME}}:latest
+              docker pull ${{vars.IMAGE_NAME}}:latest #tha
+              docker stop app || true
+              docker rm app || true
+              docker run -d \
+                --name app \
+                -p 4000:4000 \
+                --restart unless-stopped \
+                ${{vars.IMAGE_NAME}}:latest
