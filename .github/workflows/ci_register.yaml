@@ -47,7 +47,7 @@ jobs:
 
   sonar: 
     if: false
-    uses: .github/workflows/reusable-workflow/reuse_sonar.yaml
+    uses: ./.github/workflows/reusable-workflow/reuse_sonar.yaml #correction 2 .github/workflows/reusable-workflow/reuse_sonar.yaml from .github/reusable-workflow/reuse_sonar.yaml
     with:
       service-path: services/register
       project-key: register-service
@@ -60,14 +60,14 @@ jobs:
       SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
   dependency-scan:
-    uses: .github/workflows/reusable-workflow/reuse_dependency_scan.yaml
+    uses: ./.github/workflows/reusable-workflow/reuse_dependency_scan.yaml
     with:
       service-path: services/register
       
 
   build-and-image-scan:
     needs: [dependency-scan]
-    uses: .github/workflows/reusable-workflow/reuse-build_scan.yaml
+    uses: ./.github/workflows/reusable-workflow/reuse-build_scan.yaml 
     with:
       image_name: ${{vars.IMAGE_NAME}}
     secrets:
