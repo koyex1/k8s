@@ -10,13 +10,15 @@ on: # a pull request from feature branch(this is the branch that developers work
   push:
     branches: [main]
     paths:
-      - '.github/**'
-      - 'services/**'
+      - '.github/ci_notification.yaml'
+      - '.github/reusable-workflow/**'
+      - 'services/notification/**'
   pull_request:
     branches: [main]
     paths:
-      - '.github/**'
-      - 'services/**'
+      - '.github/ci_notification.yaml'
+      - '.github/reusable-workflow/**'
+      - 'services/notification/**'
 
 env:
   NODE_VERSION: 20.20.0

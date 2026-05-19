@@ -10,13 +10,15 @@ on: # a pull request from feature branch(this is the branch that developers work
   push:
     branches: [main]
     paths:
-      - '.github/**'
-      - 'services/**'
+      - '.github/ci_products.yaml'
+      - '.github/reusable-workflow/**'
+      - 'services/products/**'
   pull_request:
     branches: [main]
     paths:
-      - '.github/**'
-      - 'services/**'
+      - '.github/ci_products.yaml'
+      - '.github/reusable-workflow/**'
+      - 'services/products/**'
 
 env:
   DOTNET_VERSION: 8.0
