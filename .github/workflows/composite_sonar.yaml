@@ -1,4 +1,4 @@
-name: "Component Sonar Scan"
+name: "Composite Sonar Scan"
 
 inputs:
   service-path:
