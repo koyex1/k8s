@@ -1,4 +1,4 @@
-name: Full CI/CD Pipeline # ci code, ci terraform with atlantis, cd ec2 with ssh(to do docker run), cd ec2 with ssh(to do npm start)
+name: ci frontend # ci code, ci terraform with atlantis, cd ec2 with ssh(to do docker run), cd ec2 with ssh(to do npm start)
                           # cd k8s with kubeconfig(to do k apply or helm install), cd k8s with argocd(none image changes), cd k8s(image via value.yaml or deploy.yaml) with argocd. 
 
 permissions: #permission for reports to be uploaded to GitHub Security tab.
