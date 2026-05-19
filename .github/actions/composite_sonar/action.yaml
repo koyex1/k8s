@@ -14,10 +14,6 @@ inputs:
     description: "Additional arguments for the SonarQube scanner."
     required: true
 
-  command:
-    description: "The command to build the project before running SonarQube analysis (e.g., 'mvn clean compile'). If not provided, the build step will be skipped."
-    required: false
-
 runs:
   using: "composite"
   steps:
