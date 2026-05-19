@@ -20,7 +20,6 @@ on: # a pull request from feature branch(this is the branch that developers work
 
 env:
   NODE_VERSION: 20.20.0
-  SERVICE_PATH: services/login
 
 jobs:
   test:
@@ -28,7 +27,6 @@ jobs:
     defaults:
       run:
         working-directory: services/login
-    needs: lint
     steps:
       - name: Checkout code(test)
         uses: actions/checkout@v4
