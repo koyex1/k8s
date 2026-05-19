@@ -22,15 +22,13 @@ on: # a pull request from feature branch(this is the branch that developers work
 
 env:
   JAVA_VERSION: 21
-  SERVICE_PATH: services/register
 
 jobs:
   test-java:
     runs-on: ubuntu-latest
-
     defaults:
       run:
-        working-directory: ${{ env.SERVICE_PATH }}
+        working-directory: services/register # correction 1 services/register from ${{ env.SERVICE_PATH }}
 
     steps:
       - uses: actions/checkout@v4
@@ -45,13 +43,13 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: java-test-report
-          path: ${{ env.SERVICE_PATH }}/target/surefire-reports/
+          path: services/register/target/surefire-reports/
 
   sonar: 
     if: false
     uses: .github/workflows/reusable-workflow/reuse_sonar.yaml
     with:
-      service-path: ${{ env.SERVICE_PATH }}
+      service-path: services/register
       project-key: register-service
       arguments: >
         -Dsonar.tests=src/test
@@ -64,7 +62,7 @@ jobs:
   dependency-scan:
     uses: .github/workflows/reusable-workflow/reuse_dependency_scan.yaml
     with:
-      service-path: ${{ env.SERVICE_PATH }}
+      service-path: services/register
       
 
   build-and-image-scan:
