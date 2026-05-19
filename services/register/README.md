@@ -22,5 +22,5 @@ src/test/java/com/app/<<you test project>>
 code -> build/compile -> package/publish
 .java -> .dll & .pdb -> .dll & json
 
-# here is where i will be make changes to register for trigger gitactio
+# here is where i will be make changes to register for trigger gitaction
 git reset --soft HEAD~1
