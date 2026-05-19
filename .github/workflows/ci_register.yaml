@@ -49,7 +49,7 @@ jobs:
       service-path: services/register
       project-key: register-service
       arguments: >
-        -Dsonar.tests=src/test
+        -Dsonar.tests=src
         -Dsonar.java.binaries=target/classes
         -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
     secrets:
