@@ -43,8 +43,7 @@ jobs:
           name: java-test-report
           path: services/register/target/surefire-reports/
 
-  sonar: 
-    if: false
+  sonar: #correction 8. removed if: false from sonar job to enable it.
     uses: ./.github/workflows/reuse_sonar.yaml #correction 2 ./.github/workflows/reusable-worflow/reuse_sonar.yaml from .github/reusable-workflow/reuse_sonar.yaml
     with:
       service-path: services/register
