@@ -48,8 +48,8 @@ jobs:
     defaults:
       run:
         working-directory: services/register
-    steps:
-      - uses: ./.github/workflows/composite_sonar.yaml #correction 2 ./.github/workflows/reusable-worflow/reuse_sonar.yaml from .github/reusable-workflow/reuse_sonar.yaml
+    steps: # correction 12. using composite actions now with this special path convention.
+      - uses: ./.github/actions/composite_sonar #correction 2 ./.github/workflows/reusable-worflow/reuse_sonar.yaml from .github/reusable-workflow/reuse_sonar.yaml
         with:
           service-path: services/register
           project-key: register-service
