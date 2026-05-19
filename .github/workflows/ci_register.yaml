@@ -44,15 +44,11 @@ jobs:
           path: services/register/target/surefire-reports/
 
   sonar: #correction 8. removed if: false from sonar job to enable it.
-    runs: ubuntu-latest
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: services/register
     steps:
-      - name: Build project
-        with:
-          command: mvn clean compile #correction component action used. plus added build step.
-
       - uses: ./.github/workflows/reuse_sonar.yaml #correction 2 ./.github/workflows/reusable-worflow/reuse_sonar.yaml from .github/reusable-workflow/reuse_sonar.yaml
         with:
           service-path: services/register
