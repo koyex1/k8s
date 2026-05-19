@@ -66,7 +66,7 @@ jobs:
 
   build-and-image-scan:
     needs: [dependency-scan]
-    uses: .github/workflows/reusable-workflow/reuse-build_scan.yaml
+    uses: .github/workflows/reusable-workflow/reuse_build_scan.yaml
     with:
       image_name: ${{vars.IMAGE_NAME}}
     secrets:
