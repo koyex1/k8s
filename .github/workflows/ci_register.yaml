@@ -44,18 +44,27 @@ jobs:
           path: services/register/target/surefire-reports/
 
   sonar: #correction 8. removed if: false from sonar job to enable it.
-    uses: ./.github/workflows/reuse_sonar.yaml #correction 2 ./.github/workflows/reusable-worflow/reuse_sonar.yaml from .github/reusable-workflow/reuse_sonar.yaml
-    with:
-      service-path: services/register
-      project-key: register-service
-      arguments: > #correction 9. changed Dsonar.tests from src/test to src. correction 10. added dsonar.sources in ci from reusesable ci.
-          -Dsonar.sources=src/main
-          -Dsonar.tests=src/test/java
-          -Dsonar.java.binaries=target/classes
-          -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml 
-    secrets:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+    runs: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/register
+    steps:
+      - name: Build project
+        with:
+          command: mvn clean compile #correction component action used. plus added build step.
+
+      - uses: ./.github/workflows/reuse_sonar.yaml #correction 2 ./.github/workflows/reusable-worflow/reuse_sonar.yaml from .github/reusable-workflow/reuse_sonar.yaml
+        with:
+          service-path: services/register
+          project-key: register-service
+          arguments: > #correction 9. changed Dsonar.tests from src/test to src. correction 10. added dsonar.sources in ci from reusesable ci.
+              -Dsonar.sources=src/main
+              -Dsonar.tests=src/test/java
+              -Dsonar.java.binaries=target/classes
+              -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml 
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
   dependency-scan:
     uses: ./.github/workflows/reuse_dependency_scan.yaml #correction 3 .github/workflows/reuse_dependency_scan.yaml from .github/reusable-workflow/reuse_dependency_scan.yaml
