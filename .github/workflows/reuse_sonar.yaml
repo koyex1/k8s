@@ -25,7 +25,6 @@ on:
 # removed global work-directory from here because run wasnt used here
 jobs:
   sonar:
-    if: false
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
