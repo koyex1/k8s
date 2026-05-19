@@ -80,10 +80,10 @@ jobs:
         with:
           service-path: services/login
           project-key: login-service
-          coverage-path: >
+          arguments: >
             -Dsonar.sources=.
             -Dsonar.tests=.
-            -Dsonar.test.inclusions=**/*.test.js
+            -Dsonar.test.inclusions=**.test.js
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
