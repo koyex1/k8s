@@ -7,4 +7,4 @@ on:
       - completed #others are requested, waiting, in_progress, completed.
 jobs:
   deploy:
-    uses: .github/reusable-workflow/reuse_deploy.yaml
+    uses: .github/workflows/reusable-workflow/reuse_deploy.yaml

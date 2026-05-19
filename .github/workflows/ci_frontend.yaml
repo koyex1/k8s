@@ -10,53 +10,63 @@ on: # a pull request from feature branch(this is the branch that developers work
   push:
     branches: [main]
     paths:
-      - '.github/ci_register.yaml'
-      - '.github/reusable-workflow/**'
-      - 'services/register/**'
+      - '.github/workflows/ci_frontend.yaml'
+      - '.github/workflows/reusable-workflow/**'
+      - 'services/frontend/**'
   pull_request:
     branches: [main]
     paths:
-      - '.github/workflows/ci_register.yaml'
+      - '.github/workflows/ci_frontend.yaml'
       - '.github/workflows/reusable-workflow/**'
-      - 'services/register/**'
+      - 'services/frontend/**'
 
 env:
-  JAVA_VERSION: 21
-  SERVICE_PATH: services/register
+  NODE_VERSION: 20.20.0
+  SERVICE_PATH: services/frontend
 
 jobs:
-  test-java:
-  runs-on: ubuntu-latest
+  test-frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.SERVICE_PATH }}
 
-  defaults:
-    run:
-      working-directory: ${{ env.SERVICE_PATH }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-  steps:
-    - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: ${{ env.SERVICE_PATH }}/package-lock.json
 
-    - uses: actions/setup-java@v4
-      with:
-        distribution: temurin
-        java-version: ${{ env.JAVA_VERSION }}
+      - name: Install dependencies
+        run: npm ci
 
-    - run: mvn clean test
+      - name: Run linter
+        run: npm run lint
 
-    - uses: actions/upload-artifact@v4
-      with:
-        name: java-test-report
-        path: ${{ env.SERVICE_PATH }}/target/surefire-reports/
+      - name: Run tests with coverage
+        run: npm test -- --coverage --watchAll=false
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: ${{ env.SERVICE_PATH }}/coverage/
 
   sonar: 
     if: false
     uses: .github/workflows/reusable-workflow/reuse_sonar.yaml
     with:
       service-path: ${{ env.SERVICE_PATH }}
-      project-key: register-service
+      project-key: frontend-service
       arguments: >
-        -Dsonar.tests=src/test
-        -Dsonar.java.binaries=target/classes
-        -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+        -Dsonar.tests=src
+        -Dsonar.test.inclusions=**/*.test.js,**/*.test.jsx,**/*.spec.tsx
+        -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
