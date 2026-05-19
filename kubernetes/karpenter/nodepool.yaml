@@ -22,7 +22,8 @@ spec:
           values:
             - t3.medium
             - t3.large
-            - t4g.medium
+            - m7i-flex.large
+            - c7i-flex.large
 
       nodeClassRef:
         name: default

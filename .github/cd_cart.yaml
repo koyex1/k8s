@@ -1,0 +1,10 @@
+name: Deploy cart
+
+on:
+  workflow_run:
+    workflows: ["ci cart"]
+    types:
+      - completed #others are requested, waiting, in_progress, completed.
+jobs:
+  deploy:
+    uses: .github/reusable-workflow/reuse_deploy.yaml

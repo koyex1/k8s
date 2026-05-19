@@ -1,0 +1,720 @@
+import React, { useEffect, useState } from "react";
+
+const BASE_URL = "http://localhost:9080";
+
+type User = {
+  id: number;
+  username: string;
+  email: string;
+};
+
+type Product = {
+  id: number;
+  name: string;
+  price: number;
+};
+
+type Cart = {
+  id: string;
+  product_id: number;
+  product_name: string;
+  quantity: number;
+};
+
+type Order = {
+  id: number;
+  user_id: string;
+  username: string;
+  product_id: number;
+  quantity: number;
+  status: string;
+};
+
+type Notification = {
+  type: string;
+  message: string;
+};
+
+export default function App() {
+
+  const [activeTab, setActiveTab] = useState<"login" | "register">("login");
+
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  const [user, setUser] = useState<User | null>(null);
+
+  const [registerForm, setRegisterForm] = useState({
+    email: "",
+    username: "",
+    password: ""
+  });
+
+  const [loginForm, setLoginForm] = useState({
+    username: "",
+    password: ""
+  });
+
+  const [productForm, setProductForm] = useState({
+    name: "",
+    price: ""
+  });
+
+  const [products, setProducts] = useState<Product[]>([]);
+
+  const [cart, setCart] = useState<Cart[]>([]);
+
+  const [orders, setOrders] = useState<Order[]>([]);
+
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  const [message, setMessage] = useState("");
+
+  const token = localStorage.getItem("token");
+
+  const authHeaders = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`
+  };
+
+  /*
+    FETCH PRODUCTS
+  */
+  const fetchProducts = async () => {
+
+    try {
+
+      const res = await fetch(
+        `${BASE_URL}/products`,
+        {
+          headers: authHeaders
+        }
+      );
+
+      const data = await res.json();
+
+      setProducts(data);
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  /*
+    FETCH CART
+  */
+  const fetchCart = async () => {
+
+    try {
+
+      const res = await fetch(
+        `${BASE_URL}/cart`,
+        {
+          headers: authHeaders
+        }
+      );
+
+      const data = await res.json();
+
+      setCart(data);
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  /*
+    SSE NOTIFICATIONS
+  */
+  useEffect(() => {
+
+    if (!loggedIn || !user) {
+      return;
+    }
+
+    const eventSource = new EventSource(
+      `${BASE_URL}/notifications/stream?userId=${user.id}&username=${user.username}`
+    );
+
+    eventSource.onmessage = (event) => {
+
+      const data = JSON.parse(event.data);
+
+      if (data.type === "order_processed") {
+
+        setNotifications((prev) => [
+          data,
+          ...prev
+        ]);
+      }
+    };
+
+    return () => {
+      eventSource.close();
+    };
+
+  }, [loggedIn, user]);
+
+  /*
+    INITIAL LOAD
+  */
+  useEffect(() => {
+
+    if (loggedIn) {
+
+      fetchProducts();
+
+      fetchCart();
+    }
+
+  }, [loggedIn]);
+
+  /*
+    REGISTER
+  */
+  const handleRegister = async () => {
+
+    try {
+
+      const res = await fetch(
+        `${BASE_URL}/register`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(registerForm)
+        }
+      );
+
+      const data = await res.text();
+
+      setMessage(data);
+
+      setActiveTab("login");
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  /*
+    LOGIN
+  */
+  const handleLogin = async () => {
+
+    try {
+
+      const res = await fetch(
+        `${BASE_URL}/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(loginForm)
+        }
+      );
+
+      const data = await res.json();
+
+      localStorage.setItem(
+        "token",
+        data.access_token
+      );
+
+      setUser(data.user);
+
+      setLoggedIn(true);
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  /*
+    ADD PRODUCT
+  */
+  const handleAddProduct = async () => {
+
+    try {
+
+      const res = await fetch(
+        `${BASE_URL}/products`,
+        {
+          method: "POST",
+          headers: authHeaders,
+          body: JSON.stringify({
+            name: productForm.name,
+            price: Number(productForm.price)
+          })
+        }
+      );
+
+      const data = await res.text();
+
+      setMessage(data);
+
+      setProductForm({
+        name: "",
+        price: ""
+      });
+
+      fetchProducts();
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  /*
+    ADD TO CART
+  */
+  const handleAddToCart = async (
+    productId: number
+  ) => {
+
+    try {
+
+      const res = await fetch(
+        `${BASE_URL}/cart`,
+        {
+          method: "POST",
+          headers: authHeaders,
+          body: JSON.stringify({
+            product_id: productId,
+            quantity: 1
+          })
+        }
+      );
+
+      const data = await res.json();
+
+      setMessage(data.message);
+
+      fetchCart();
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  /*
+    CREATE ORDER
+  */
+  const handleCreateOrder = async (
+    item: Cart
+  ) => {
+
+    try {
+
+      const res = await fetch(
+        `${BASE_URL}/order`,
+        {
+          method: "POST",
+          headers: authHeaders,
+          body: JSON.stringify({
+            user_id: user?.id,
+            username: user?.username,
+            product_id: item.product_id,
+            quantity: item.quantity
+          })
+        }
+      );
+
+      const data = await res.json();
+
+      setOrders((prev) => [
+        data.order,
+        ...prev
+      ]);
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  /*
+    LOGIN / REGISTER PAGE
+  */
+  if (!loggedIn) {
+
+    return (
+      <div
+        style={{
+          padding: "40px",
+          fontFamily: "Arial"
+        }}
+      >
+
+        <h1>Auth</h1>
+
+        <div
+          style={{
+            display: "flex",
+            gap: "10px",
+            marginBottom: "20px"
+          }}
+        >
+
+          <button
+            onClick={() =>
+              setActiveTab("login")
+            }
+          >
+            Login
+          </button>
+
+          <button
+            onClick={() =>
+              setActiveTab("register")
+            }
+          >
+            Register
+          </button>
+        </div>
+
+        {
+          activeTab === "register" ? (
+
+            <div>
+
+              <input
+                placeholder="Email"
+                value={registerForm.email}
+                onChange={(e) =>
+                  setRegisterForm({
+                    ...registerForm,
+                    email: e.target.value
+                  })
+                }
+              />
+
+              <br /><br />
+
+              <input
+                placeholder="Username"
+                value={registerForm.username}
+                onChange={(e) =>
+                  setRegisterForm({
+                    ...registerForm,
+                    username: e.target.value
+                  })
+                }
+              />
+
+              <br /><br />
+
+              <input
+                type="password"
+                placeholder="Password"
+                value={registerForm.password}
+                onChange={(e) =>
+                  setRegisterForm({
+                    ...registerForm,
+                    password: e.target.value
+                  })
+                }
+              />
+
+              <br /><br />
+
+              <button
+                onClick={handleRegister}
+              >
+                Register
+              </button>
+
+            </div>
+
+          ) : (
+
+            <div>
+
+              <input
+                placeholder="Username"
+                value={loginForm.username}
+                onChange={(e) =>
+                  setLoginForm({
+                    ...loginForm,
+                    username: e.target.value
+                  })
+                }
+              />
+
+              <br /><br />
+
+              <input
+                type="password"
+                placeholder="Password"
+                value={loginForm.password}
+                onChange={(e) =>
+                  setLoginForm({
+                    ...loginForm,
+                    password: e.target.value
+                  })
+                }
+              />
+
+              <br /><br />
+
+              <button
+                onClick={handleLogin}
+              >
+                Login
+              </button>
+
+            </div>
+          )
+        }
+
+        <br />
+
+        <p>{message}</p>
+
+      </div>
+    );
+  }
+
+  /*
+    HOME PAGE
+  */
+  return (
+
+    <div
+      style={{
+        padding: "40px",
+        fontFamily: "Arial"
+      }}
+    >
+
+      <h1>Home</h1>
+
+      {/* USER INFO */}
+
+      <h2>User Info</h2>
+
+      <p>ID: {user?.id}</p>
+      <p>Username: {user?.username}</p>
+      <p>Email: {user?.email}</p>
+
+      <hr />
+
+      {/* ADD PRODUCT */}
+
+      <h2>Add Product</h2>
+
+      <input
+        placeholder="Product Name"
+        value={productForm.name}
+        onChange={(e) =>
+          setProductForm({
+            ...productForm,
+            name: e.target.value
+          })
+        }
+      />
+
+      <br /><br />
+
+      <input
+        placeholder="Price"
+        type="number"
+        value={productForm.price}
+        onChange={(e) =>
+          setProductForm({
+            ...productForm,
+            price: e.target.value
+          })
+        }
+      />
+
+      <br /><br />
+
+      <button
+        onClick={handleAddProduct}
+      >
+        Add Product
+      </button>
+
+      <hr />
+
+      {/* PRODUCTS */}
+
+      <h2>Products</h2>
+
+      {
+        products.map((product) => (
+
+          <div
+            key={product.id}
+            style={{
+              border: "1px solid black",
+              padding: "10px",
+              marginBottom: "10px"
+            }}
+          >
+
+            <p>ID: {product.id}</p>
+            <p>Name: {product.name}</p>
+            <p>Price: {product.price}</p>
+
+            <button
+              onClick={() =>
+                handleAddToCart(product.id)
+              }
+            >
+              Add To Cart
+            </button>
+
+          </div>
+        ))
+      }
+
+      <hr />
+
+      {/* CART */}
+
+      <h2>Cart</h2>
+
+      {
+        cart.map((item) => (
+
+          <div
+            key={item.id}
+            style={{
+              border: "1px solid blue",
+              padding: "10px",
+              marginBottom: "10px"
+            }}
+          >
+
+            <p>ID: {item.id}</p>
+
+            <p>
+              Product ID: {item.product_id}
+            </p>
+
+            <p>
+              Product Name:
+              {
+                item.product_name ||
+                "No Product Name"
+              }
+            </p>
+
+            <p>
+              Quantity: {item.quantity}
+            </p>
+
+            <button
+              onClick={() =>
+                handleCreateOrder(item)
+              }
+            >
+              Order
+            </button>
+
+          </div>
+        ))
+      }
+
+      <hr />
+
+      {/* ORDERS */}
+
+      <h2>Orders</h2>
+
+      {
+        orders.map((order) => (
+
+          <div
+            key={order.id}
+            style={{
+              border: "1px solid green",
+              padding: "10px",
+              marginBottom: "10px"
+            }}
+          >
+
+            <p>ID: {order.id}</p>
+
+            <p>User ID: {order.user_id}</p>
+
+            <p>Username: {order.username}</p>
+
+            <p>
+              Product ID: {order.product_id}
+            </p>
+
+            <p>
+              Quantity: {order.quantity}
+            </p>
+
+            <p>Status: {order.status}</p>
+
+          </div>
+        ))
+      }
+
+      <hr />
+
+      {/* NOTIFICATIONS */}
+
+      <h2>Notifications</h2>
+
+      {
+        notifications.map(
+          (
+            notification,
+            index
+          ) => (
+
+            <div
+              key={index}
+              style={{
+                border: "1px solid red",
+                padding: "10px",
+                marginBottom: "10px"
+              }}
+            >
+
+              <p>
+                Type:
+                {notification.type}
+              </p>
+
+              <p>
+                Message:
+                {notification.message}
+              </p>
+
+            </div>
+          )
+        )
+      }
+
+    </div>
+  );
+}
+
+
+
+
+server {
+    listen 80;
+
+    server_name localhost;
+
+    root /usr/share/nginx/html;
+
+    index index.html;
+
+    location / {
+    try_files $uri /index.html;
+    }
+
+    # optional: API proxy
+    location /api/ {
+    proxy_pass http://backend:9080/;
+    }
+}

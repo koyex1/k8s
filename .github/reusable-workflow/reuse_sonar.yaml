@@ -1,0 +1,45 @@
+name: Reusable Sonar Scan
+
+on:
+  workflow_call:
+    inputs:
+      service-path:
+        required: true
+        type: string
+
+      project-key:
+        required: true
+        type: string
+      
+      arguments:
+        required: true
+        type: string
+
+    secrets:
+      SONAR_TOKEN:
+        required: true
+
+      SONAR_HOST_URL:
+        required: true
+
+# removed global work-directory from here because run wasnt used here
+jobs:
+  sonar:
+    if: false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@v2
+        with:
+          projectBaseDir: ${{ inputs.service-path }}
+          args: >
+            -Dsonar.projectKey=${{inputs.project-key}}
+            -Dsonar.sources=.
+            ${{ inputs.arguments}}
+
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}

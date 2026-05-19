@@ -1,0 +1,74 @@
+name: Full CI/CD Pipeline # ci code, ci terraform with atlantis, cd ec2 with ssh(to do docker run), cd ec2 with ssh(to do npm start)
+                          # cd k8s with kubeconfig(to do k apply or helm install), cd k8s with argocd(none image changes), cd k8s(image via value.yaml or deploy.yaml) with argocd. 
+
+permissions: #permission for reports to be uploaded to GitHub Security tab.
+  contents: read # for checkout action
+  security-events: write # for uploading sarif reports to security tab
+  actions: read # for reusable workflow
+
+on: # a pull request from feature branch(this is the branch that developers work on) to main branch. then on merge request to main branch, underneath a push event is triggered for main branch.
+  push:
+    branches: [main]
+    paths:
+      - '.github/**'
+      - 'services/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/**'
+      - 'services/**'
+
+env:
+  DOTNET_VERSION: 8.0
+  SERVICE_PATH: services/products
+
+jobs:
+  test-dotnet:
+  runs-on: ubuntu-latest
+
+  defaults:
+    run:
+      working-directory: ${{ env.SERVICE_PATH }}
+
+  steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - run: dotnet restore
+
+    - run: dotnet test --collect:"XPlat Code Coverage"
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: dotnet-coverage
+        path: ${{ env.SERVICE_PATH }}/TestResults/
+
+  sonar: 
+    if: false
+    uses: .github/workflows/reuse_sonar.yaml
+    with:
+      service-path: ${{ env.SERVICE_PATH }}
+      project-key: products-service
+      arguments: >
+        -Dsonar.cs.opencover.reportsPaths=coverage.opencover.xml
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+  dependency-scan:
+    uses: .github/workflows/reuse_dependency_scan.yaml
+    with:
+      service-path: ${{ env.SERVICE_PATH }}
+      
+
+  build-and-image-scan:
+    needs: [dependency-scan]
+    uses: .github/workflows/reuse-build_scan.yaml
+    with:
+      image_name: ${{vars.IMAGE_NAME}}
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

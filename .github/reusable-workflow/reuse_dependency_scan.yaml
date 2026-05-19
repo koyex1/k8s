@@ -1,0 +1,46 @@
+name: Reusable Dependency Scan
+
+on:
+  workflow_call:
+    inputs:
+      service-path:
+        required: true
+        type: string
+
+#no run in this workflow, so i removed global work directory. 
+jobs:
+  dependency-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code(dependency code)
+        uses: actions/checkout@v4
+      
+      - name: Trivy FS Scan (JSON)
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          scan-type: fs
+          format: json
+          output: trivy-fs-report.json
+          exit-code: 0 
+          severity: CRITICAL,HIGH
+          scan-ref: ${{ inputs.service-path }}
+
+      - name: Upload FS Scan Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-fs-report
+          path: services/trivy-fs-report.json
+
+      - name: Trivy FS Scan (SARIF)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          scan-type: fs
+          format: sarif
+          output: trivy-results.sarif
+          scan-ref: ${{ inputs.service-path }}
+
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif

@@ -1,0 +1,88 @@
+name: Full CI/CD Pipeline # ci code, ci terraform with atlantis, cd ec2 with ssh(to do docker run), cd ec2 with ssh(to do npm start)
+                          # cd k8s with kubeconfig(to do k apply or helm install), cd k8s with argocd(none image changes), cd k8s(image via value.yaml or deploy.yaml) with argocd. 
+
+permissions: #permission for reports to be uploaded to GitHub Security tab.
+  contents: read # for checkout action
+  security-events: write # for uploading sarif reports to security tab
+  actions: read # for reusable workflow
+
+on: # a pull request from feature branch(this is the branch that developers work on) to main branch. then on merge request to main branch, underneath a push event is triggered for main branch.
+  push:
+    branches: [main]
+    paths:
+      - '.github/**'
+      - 'services/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/**'
+      - 'services/**'
+
+env:
+  NODE_VERSION: 20.20.0
+  SERVICE_PATH: services/login
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    needs: lint
+    steps:
+      - name: Checkout code(test)
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js(test)
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{env.NODE_VERSION}}
+          cache: npm 
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies(test)
+        run: npm ci
+
+      - name: Run tests with coverage and JUnit reporting
+        run: npm test -- --coverage --ci --reporters=default --reporters=jest-junit
+
+      - name: Upload JUnit Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-report
+          path: ./backend/junit.xml 
+
+      - name: Upload Coverage Report 
+        uses: actions/upload-artifact@v4 
+        with:
+          name: coverage-report
+          path: ./backend/coverage/ 
+
+  sonar: 
+    if: false
+    uses: .github/workflows/reuse_sonar.yaml
+    with:
+      service-path: ${{ env.SERVICE_PATH }}
+      project-key: login-service
+      coverage-path: >
+        -Dsonar.tests=.
+        -Dsonar.test.inclusions=**/*.test.js
+        -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+  dependency-scan:
+    uses: .github/workflows/reuse_dependency_scan.yaml
+    with:
+      service-path: ${{ env.SERVICE_PATH }}
+      
+
+  build-and-image-scan:
+    needs: [dependency-scan]
+    uses: .github/workflows/reuse-build_scan.yaml
+    with:
+      image_name: ${{vars.IMAGE_NAME}}
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
