@@ -64,8 +64,7 @@ jobs:
       
 
   build-and-image-scan:
-    needs: [dependency-scan]
-    uses: ./.github/workflows/reuse_build_scan.yaml
+    needs: [dependency-scan, sonar, test-java] #correction 7. added sonar and test-java as dependencies for build and image scan.
     with:
       service-path: services/register #correction 4. service-path provided
       image_name: register-service #correction 5. image_name provided as a hard coded value.
