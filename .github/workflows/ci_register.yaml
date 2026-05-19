@@ -50,7 +50,7 @@ jobs:
       project-key: register-service
       arguments: > #correction 9. changed Dsonar.tests from src/test to src. correction 10. added dsonar.sources in ci from reusesable ci.
           -Dsonar.sources=src/main
-          -Dsonar.tests=src/test
+          -Dsonar.tests=src/test/java
           -Dsonar.java.binaries=target/classes
           -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml 
     secrets:
