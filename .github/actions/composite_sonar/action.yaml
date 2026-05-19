@@ -1,21 +1,22 @@
 name: "Composite Sonar Scan"
+description: "A composite action to perform SonarQube analysis on a specified service path with given arguments."
 
 inputs:
   service-path:
+    description: "The path to the service directory to be analyzed by SonarQube."
     required: true
-    type: string
 
   project-key:
+    description: "The SonarQube project key for the analysis."
     required: true
-    type: string
 
   arguments:
+    description: "Additional arguments for the SonarQube scanner."
     required: true
-    type: string
 
   command:
+    description: "The command to build the project before running SonarQube analysis (e.g., 'mvn clean compile'). If not provided, the build step will be skipped."
     required: false
-    type: string
 
 runs:
   using: "composite"

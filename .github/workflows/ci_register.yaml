@@ -56,6 +56,7 @@ jobs:
         with:
           service-path: services/register
           project-key: register-service
+          commands: mvn clean compile
           arguments: > #correction 9. changed Dsonar.tests from src/test to src. correction 10. added dsonar.sources in ci from reusesable ci.
               -Dsonar.sources=src/main
               -Dsonar.tests=src/test/java
