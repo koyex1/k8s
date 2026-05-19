@@ -36,7 +36,7 @@ jobs:
         with:
           node-version: ${{env.NODE_VERSION}}
           cache: npm 
-          cache-dependency-path: backend/package-lock.json
+          cache-dependency-path: ./services/login/package-lock.json
 
       - name: Install dependencies(test)
         run: npm ci
@@ -48,13 +48,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: junit-report
-          path: ./backend/junit.xml 
+          path: ./services/login/junit.xml 
 
       - name: Upload Coverage Report 
         uses: actions/upload-artifact@v4 
         with:
           name: coverage-report
-          path: ./backend/coverage/ 
+          path: ./services/login/coverage/ 
 
   sonar: 
     runs-on: ubuntu-latest
@@ -70,7 +70,7 @@ jobs:
         with:
           node-version: ${{env.NODE_VERSION}}
           cache: npm 
-          cache-dependency-path: backend/package-lock.json
+          cache-dependency-path: services/login/package-lock.json
 
       - name: Install dependencies(sonar)
         run: npm ci
