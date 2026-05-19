@@ -69,7 +69,8 @@ jobs:
     needs: [dependency-scan]
     uses: ./.github/workflows/reuse_build_scan.yaml
     with:
-      image_name: ${{vars.IMAGE_NAME}}
+      service-path: services/register #correction 4. service-path provided
+      image_name: register-service #correction 5. image_name provided as a hard coded value.
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
