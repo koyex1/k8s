@@ -10,14 +10,12 @@ on: # a pull request from feature branch(this is the branch that developers work
   push:
     branches: [main]
     paths:
-      - '.github/ci_register.yaml'
-      - '.github/reusable-workflow/**'
+      - '.github/workflows/ci_register.yaml' # correction 6. removed removable-workflow path for both push and pr. and also worflows was missing in one. seems to be correct in other CIs.
       - 'services/register/**'
   pull_request:
     branches: [main]
     paths:
       - '.github/workflows/ci_register.yaml'
-      - '.github/workflows/reusable-workflow/**'
       - 'services/register/**'
 
 env:
