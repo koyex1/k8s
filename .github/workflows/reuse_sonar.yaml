@@ -36,7 +36,6 @@ jobs:
           projectBaseDir: ${{ inputs.service-path }}
           args: >
             -Dsonar.projectKey=${{inputs.project-key}}
-            -Dsonar.sources=.
             ${{ inputs.arguments}}
 
         env:

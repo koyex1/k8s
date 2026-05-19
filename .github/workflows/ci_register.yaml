@@ -48,10 +48,11 @@ jobs:
     with:
       service-path: services/register
       project-key: register-service
-      arguments: >
-        -Dsonar.tests=src
-        -Dsonar.java.binaries=target/classes
-        -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+      arguments: > #correction 9. changed Dsonar.tests from src/test to src. correction 10. added dsonar.sources in ci from reusesable ci.
+          -Dsonar.sources=src/main
+          -Dsonar.tests=src/test
+          -Dsonar.java.binaries=target/classes
+          -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml 
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
