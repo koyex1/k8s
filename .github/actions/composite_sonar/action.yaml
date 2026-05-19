@@ -20,12 +20,10 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
     - name: Build project
       if: ${{ inputs.command != '' }}
       run: ${{ inputs.command }} #correction 11. added build step for sonar.java.binaries flag to find target/classes for sonar analysis.
+      shell: bash
 
     - name: SonarQube Scan
       uses: sonarsource/sonarqube-scan-action@v2

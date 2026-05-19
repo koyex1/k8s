@@ -51,6 +51,7 @@ jobs:
     steps: # correction 12. using composite actions now with this special path convention.
       - uses: actions/checkout@v4
         name: Checkout repository
+      
       - uses: ./.github/actions/composite_sonar #correction 2 ./.github/workflows/reusable-worflow/reuse_sonar.yaml from .github/reusable-workflow/reuse_sonar.yaml
         with:
           service-path: services/register
