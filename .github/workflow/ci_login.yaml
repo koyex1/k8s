@@ -10,26 +10,26 @@ on: # a pull request from feature branch(this is the branch that developers work
   push:
     branches: [main]
     paths:
-      - '.github/ci_notification.yaml'
-      - '.github/reusable-workflow/**'
-      - 'services/notification/**'
+      - '.github/workflows/ci_login.yaml'
+      - '.github/workflows/reusable-workflow/**'
+      - 'services/login/**'
   pull_request:
     branches: [main]
     paths:
-      - '.github/ci_notification.yaml'
-      - '.github/reusable-workflow/**'
-      - 'services/notification/**'
+      - '.github/workflows/ci_login.yaml'
+      - '.github/workflows/reusable-workflow/**'
+      - 'services/login/**'
 
 env:
   NODE_VERSION: 20.20.0
-  SERVICE_PATH: services/notification
+  SERVICE_PATH: services/login
 
 jobs:
   test:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ${{ env.SERVICE_PATH }}
+        working-directory: backend
     needs: lint
     steps:
       - name: Checkout code(test)
@@ -40,7 +40,7 @@ jobs:
         with:
           node-version: ${{env.NODE_VERSION}}
           cache: npm 
-          cache-dependency-path: ${{ env.SERVICE_PATH }}/package-lock.json
+          cache-dependency-path: backend/package-lock.json
 
       - name: Install dependencies(test)
         run: npm ci
@@ -52,17 +52,17 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: junit-report
-          path: ${{ env.SERVICE_PATH }}/junit.xml 
+          path: ./backend/junit.xml 
 
       - name: Upload Coverage Report 
         uses: actions/upload-artifact@v4 
         with:
           name: coverage-report
-          path: ${{ env.SERVICE_PATH }}/coverage/ 
+          path: ./backend/coverage/ 
 
   sonar: 
     if: false
-    uses: .github/workflows/reuse_sonar.yaml
+    uses: .github/workflows/reusable-workflow/reuse_sonar.yaml
     with:
       service-path: ${{ env.SERVICE_PATH }}
       project-key: login-service
@@ -75,14 +75,14 @@ jobs:
       SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
   dependency-scan:
-    uses: .github/workflows/reuse_dependency_scan.yaml
+    uses: .github/workflows/reusable-workflow/reuse_dependency_scan.yaml
     with:
       service-path: ${{ env.SERVICE_PATH }}
       
 
   build-and-image-scan:
     needs: [dependency-scan]
-    uses: .github/workflows/reuse-build_scan.yaml
+    uses: .github/workflows/reusable-workflow/reuse-build_scan.yaml
     with:
       image_name: ${{vars.IMAGE_NAME}}
     secrets:

@@ -7,6 +7,9 @@ jobs.{{jobName}} [runs-on, defaults.run.working-directory, steps]
 #work-directory does not work with uses.with. path commands are like your normal cd path commands. Afterall the global work-dir falls under default.RUN.work-directory. emphasis on the RUN.
 #work-directory at global level works for only run commands. and you can also scope work-directory for that particular run steps.
 
+# rules gitaction
+github/workflows first everything must be created inside it. how you choose to organize after entering this directory is up to you.
+
 # ci cd pipeline look into it
  ci code, ci terraform with atlantis, cd ec2 with ssh(to do docker run), cd ec2 with ssh(to do npm start), cd k8s with kubeconfig(to do k apply or helm install), cd k8s with argocd(none image changes), cd k8s(image via value.yaml or deploy.yaml) with argocd. 
 

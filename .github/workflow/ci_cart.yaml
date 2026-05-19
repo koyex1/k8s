@@ -10,14 +10,14 @@ on: # a pull request from feature branch(this is the branch that developers work
   push:
     branches: [main]
     paths:
-      - '.github/ci_cart.yaml'
-      - '.github/reusable-workflow/**'
+      - '.github/workflows/ci_cart.yaml'
+      - '.github/workflows/reusable-workflow/**'
       - 'services/cart/**'
   pull_request:
     branches: [main]
     paths:
-      - '.github/ci_cart.yaml'
-      - '.github/reusable-workflow/**'
+      - '.github/workflows/ci_cart.yaml'
+      - '.github/workflows/reusable-workflow/**'
       - 'services/cart/**'
 
 env:
@@ -49,7 +49,7 @@ jobs:
 
   sonar: 
     if: false
-    uses: .github/workflows/reuse_sonar.yaml
+    uses: .github/workflows/reusable-workflow/reuse_sonar.yaml
     with:
       service-path: ${{ env.SERVICE_PATH }}
       project-key: cart-service
@@ -62,14 +62,14 @@ jobs:
       SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
   dependency-scan:
-    uses: .github/workflows/reuse_dependency_scan.yaml
+    uses: .github/workflows/reusable-workflow/reuse_dependency_scan.yaml
     with:
       service-path: ${{ env.SERVICE_PATH }}
       
 
   build-and-image-scan:
     needs: [dependency-scan]
-    uses: .github/workflows/reuse-build_scan.yaml
+    uses: .github/workflows/reusable-workflow/reuse-build_scan.yaml
     with:
       image_name: ${{vars.IMAGE_NAME}}
     secrets:

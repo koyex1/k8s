@@ -10,76 +10,66 @@ on: # a pull request from feature branch(this is the branch that developers work
   push:
     branches: [main]
     paths:
-      - '.github/ci_frontend.yaml'
-      - '.github/reusable-workflow/**'
-      - 'services/frontend/**'
+      - '.github/workflows/ci_order.yaml'
+      - '.github/workflows/reusable-workflow/**'
+      - 'services/order/**'
   pull_request:
     branches: [main]
     paths:
-      - '.github/ci_frontend.yaml'
-      - '.github/reusable-workflow/**'
-      - 'services/frontend/**'
+      - '.github/workflows/ci_order.yaml'
+      - '.github/workflows/reusable-workflow/**'
+      - 'services/order/**'
 
 env:
-  NODE_VERSION: 20.20.0
-  SERVICE_PATH: services/frontend
+  PYTHON_VERSION: 3.12
+  SERVICE_PATH: services/order
 
 jobs:
-  test-frontend:
+  test-python:
   runs-on: ubuntu-latest
+
   defaults:
     run:
       working-directory: ${{ env.SERVICE_PATH }}
-
   steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
+    - uses: actions/setup-python@v5
       with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: npm
-        cache-dependency-path: ${{ env.SERVICE_PATH }}/package-lock.json
+        python-version: ${{ env.PYTHON_VERSION }}
 
-    - name: Install dependencies
-      run: npm ci
+    - run: pip install -r requirements.txt
 
-    - name: Run linter
-      run: npm run lint
+    - run: pytest --cov=. --cov-report=xml
 
-    - name: Run tests with coverage
-      run: npm test -- --coverage --watchAll=false
-
-    - name: Upload coverage report
-      uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v4
       with:
-        name: frontend-coverage
-        path: ${{ env.SERVICE_PATH }}/coverage/
+        name: python-coverage
+        path: ${{ env.SERVICE_PATH }}/coverage.xml
 
   sonar: 
     if: false
-    uses: .github/workflows/reuse_sonar.yaml
+    uses: .github/workflows/reusable-workflow/reuse_sonar.yaml
     with:
       service-path: ${{ env.SERVICE_PATH }}
-      project-key: frontend-service
+      project-key: order-service
       arguments: >
-        -Dsonar.tests=src
-        -Dsonar.test.inclusions=**/*.test.js,**/*.test.jsx,**/*.spec.tsx
-        -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+        -Dsonar.tests=.
+        -Dsonar.test.inclusions=**/test_*.py
+        -Dsonar.python.coverage.reportPaths=coverage.xml
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
   dependency-scan:
-    uses: .github/workflows/reuse_dependency_scan.yaml
+    uses: .github/workflows/reusable-workflow/reuse_dependency_scan.yaml
     with:
       service-path: ${{ env.SERVICE_PATH }}
       
 
   build-and-image-scan:
     needs: [dependency-scan]
-    uses: .github/workflows/reuse-build_scan.yaml
+    uses: .github/workflows/reusable-workflow/reuse-build_scan.yaml
     with:
       image_name: ${{vars.IMAGE_NAME}}
     secrets:
