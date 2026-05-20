@@ -20,14 +20,13 @@ on: # a pull request from feature branch(this is the branch that developers work
 
 env:
   GO_VERSION: 1.22
-  SERVICE_PATH: services/cart
 
 jobs:
   test-go:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ${{ env.SERVICE_PATH }}
+        working-directory: services/cart
 
     steps:
       - uses: actions/checkout@v4
@@ -43,33 +42,49 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: go-coverage
-          path: ${{ env.SERVICE_PATH}}/coverage.out
+          path: services/cart/coverage.out
 
   sonar: 
     if: false
-    uses: .github/workflows/reusable-workflow/reuse_sonar.yaml
-    with:
-      service-path: ${{ env.SERVICE_PATH }}
-      project-key: cart-service
-      arguments: >
-        -Dsonar.tests=.
-        -Dsonar.test.inclusions=**/*_test.go
-        -Dsonar.go.coverage.reportPaths=coverage.out
-    secrets:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/cart
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - run: go mod download
+
+      - name: Run SonarQube Analysis  
+        uses: ./.github/actions/composite_sonar
+        with:
+          service-path: services/cart
+          project-key: cart-service
+          arguments: >
+            -Dsonar.sources=.
+            -Dsonar.tests=.
+            -Dsonar.test.inclusions=**/*_test.go
+            -Dsonar.go.coverage.reportPaths=coverage.out
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
   dependency-scan:
-    uses: .github/workflows/reusable-workflow/reuse_dependency_scan.yaml
+    uses: ./.github/workflows/reuse_dependency_scan.yaml
     with:
-      service-path: ${{ env.SERVICE_PATH }}
+      service-path: services/cart
       
 
   build-and-image-scan:
-    needs: [dependency-scan]
-    uses: .github/workflows/reusable-workflow/reuse_build_scan.yaml
+    needs: [dependency-scan, sonar, test-go] # added sonar and test-go as dependencies for build and image scan.
+    uses: ./.github/workflows/reuse_build_scan.yaml
     with:
-      image_name: ${{vars.IMAGE_NAME}}
+      service-path: services/cart
+      image_name: cart-service
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

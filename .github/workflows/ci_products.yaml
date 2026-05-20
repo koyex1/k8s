@@ -20,7 +20,6 @@ on: # a pull request from feature branch(this is the branch that developers work
 
 env:
   DOTNET_VERSION: 8.0
-  SERVICE_PATH: services/products
 
 jobs:
   test-dotnet:
@@ -28,7 +27,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ${{ env.SERVICE_PATH }}
+        working-directory: services/products
 
     steps:
       - uses: actions/checkout@v4
@@ -44,19 +43,34 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: dotnet-coverage
-          path: ${{ env.SERVICE_PATH }}/TestResults/
+          path: services/products/TestResults/
 
   sonar: 
     if: false
-    uses: .github/workflows/reusable-workflow/reuse_sonar.yaml
-    with:
-      service-path: ${{ env.SERVICE_PATH }}
-      project-key: products-service
-      arguments: >
-        -Dsonar.cs.opencover.reportsPaths=coverage.opencover.xml
-    secrets:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/products
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - run: dotnet restore
+    
+      - uses: .github/workflows/reusable-workflow/reuse_sonar.yaml
+        with:
+          service-path: services/products
+          project-key: products-service
+          arguments: >
+            -Dsonar.sources=.
+            -Dsonar.tests=test
+            -Dsonar.cs.opencover.reportsPaths=coverage.opencover.xml
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
   dependency-scan:
     uses: .github/workflows/reusable-workflow/reuse_dependency_scan.yaml

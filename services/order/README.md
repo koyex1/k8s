@@ -1,6 +1,13 @@
 # apis libraries and frameworks for python
 django, flask, fastapi, tornado, falcon, bottle.
 
+# package management
+write you package in the requriments file. so like java (manual)
+javascript, go and dotnet (autoupdate with package manager cli command)
+
+# testing
+python, go, javascript - detect test using *_test_* names
+while java uses a specific path and dotnet uses references to a specific path
 
 # for rabbitmq 
 -- 1. created exchange in the ui and gave it a name order.exchange, type direct, durabilitly of transient, auto delete No, internal No, advanced arguments [alternate exchange - chatgpt seems to think it can also do the advanced argumetns in queues]

@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "YhbEqUYBRTMFZ6bhFrZ5/hAt5vTD9FSDOewOkRYxwR28B4SaX1h1fodUzGoEpOVh5GaHyqyfvkeJChfUR8UJsA==",
+  "dgSpecHash": "oXdvhSa/wQiPbz4kkjspcPMW86QKd3dUonrlF2+sPBVhirSNoBMGsgkOvkU/eVYPLhkMDepA6MWXhx1jaHCZvw==",
   "success": true,
   "projectFilePath": "/home/koyex1/projects/k8s/services/products/products.csproj",
   "expectedPackageFiles": [
@@ -40,7 +40,15 @@
     "/home/koyex1/.nuget/packages/system.io.hashing/10.0.2/system.io.hashing.10.0.2.nupkg.sha512",
     "/home/koyex1/.nuget/packages/system.io.pipelines/10.0.0/system.io.pipelines.10.0.0.nupkg.sha512",
     "/home/koyex1/.nuget/packages/system.text.encodings.web/10.0.0/system.text.encodings.web.10.0.0.nupkg.sha512",
-    "/home/koyex1/.nuget/packages/system.text.json/10.0.0/system.text.json.10.0.0.nupkg.sha512"
+    "/home/koyex1/.nuget/packages/system.text.json/10.0.0/system.text.json.10.0.0.nupkg.sha512",
+    "/home/koyex1/.nuget/packages/xunit/2.9.3/xunit.2.9.3.nupkg.sha512",
+    "/home/koyex1/.nuget/packages/xunit.abstractions/2.0.3/xunit.abstractions.2.0.3.nupkg.sha512",
+    "/home/koyex1/.nuget/packages/xunit.analyzers/1.18.0/xunit.analyzers.1.18.0.nupkg.sha512",
+    "/home/koyex1/.nuget/packages/xunit.assert/2.9.3/xunit.assert.2.9.3.nupkg.sha512",
+    "/home/koyex1/.nuget/packages/xunit.core/2.9.3/xunit.core.2.9.3.nupkg.sha512",
+    "/home/koyex1/.nuget/packages/xunit.extensibility.core/2.9.3/xunit.extensibility.core.2.9.3.nupkg.sha512",
+    "/home/koyex1/.nuget/packages/xunit.extensibility.execution/2.9.3/xunit.extensibility.execution.2.9.3.nupkg.sha512",
+    "/home/koyex1/.nuget/packages/xunit.runner.visualstudio/3.1.5/xunit.runner.visualstudio.3.1.5.nupkg.sha512"
   ],
   "logs": []
 }

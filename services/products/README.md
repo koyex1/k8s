@@ -21,3 +21,8 @@ dotnet build
 # similarities with java
 pom.xml .csproj, mvn dependency:go-offline dotnet restore, mvn package dotnet publish, .jar .dll, java -jar dotnet app.dll
 
+# test
+dotnet new xunit -o services/products/test
+dotnet add services/products/test/test.csproj reference services/products/products.csproj
+dotnet test
+

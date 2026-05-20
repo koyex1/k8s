@@ -20,7 +20,6 @@ on: # a pull request from feature branch(this is the branch that developers work
 
 env:
   PYTHON_VERSION: 3.12
-  SERVICE_PATH: services/order
 
 jobs:
   test-python:
@@ -28,7 +27,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ${{ env.SERVICE_PATH }}
+        working-directory: services/order
     steps:
       - uses: actions/checkout@v4
 
@@ -43,33 +42,48 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: python-coverage
-          path: ${{ env.SERVICE_PATH }}/coverage.xml
+          path: services/order/coverage.xml
 
   sonar: 
     if: false
-    uses: .github/workflows/reusable-workflow/reuse_sonar.yaml
-    with:
-      service-path: ${{ env.SERVICE_PATH }}
-      project-key: order-service
-      arguments: >
-        -Dsonar.tests=.
-        -Dsonar.test.inclusions=**/test_*.py
-        -Dsonar.python.coverage.reportPaths=coverage.xml
-    secrets:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/order
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - run: pip install -r requirements.txt
+      
+      - uses: ./.github/actions/composite_sonar
+        with:
+          service-path: services/order
+          project-key: order-service
+          arguments: >
+            -Dsonar.sources=.
+            -Dsonar.tests=.
+            -Dsonar.test.inclusions=**/test_*.py
+            -Dsonar.python.coverage.reportPaths=coverage.xml
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
   dependency-scan:
-    uses: .github/workflows/reusable-workflow/reuse_dependency_scan.yaml
+    uses: ./.github/workflows/reuse_dependency_scan.yaml
     with:
-      service-path: ${{ env.SERVICE_PATH }}
+      service-path: services/order
       
 
   build-and-image-scan:
     needs: [dependency-scan]
-    uses: .github/workflows/reusable-workflow/reuse_build_scan.yaml
+    uses: ./.github/workflows/reuse_build_scan.yaml
     with:
-      image_name: ${{vars.IMAGE_NAME}}
+      service-path: services/order
+      image_name: order-service
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
