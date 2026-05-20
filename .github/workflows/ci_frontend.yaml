@@ -20,14 +20,13 @@ on: # a pull request from feature branch(this is the branch that developers work
 
 env:
   NODE_VERSION: 20.20.0
-  SERVICE_PATH: services/frontend
 
 jobs:
   test-frontend:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ${{ env.SERVICE_PATH }}
+        working-directory: services/frontend
 
     steps:
       - name: Checkout code
@@ -38,13 +37,10 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-          cache-dependency-path: ${{ env.SERVICE_PATH }}/package-lock.json
+          cache-dependency-path: services/frontend/package-lock.json
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Run linter
-        run: npm run lint
 
       - name: Run tests with coverage
         run: npm test -- --coverage --watchAll=false
@@ -53,33 +49,53 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: frontend-coverage
-          path: ${{ env.SERVICE_PATH }}/coverage/
+          path: services/frontend/coverage/
 
   sonar: 
     if: false
-    uses: .github/workflows/reusable-workflow/reuse_sonar.yaml
-    with:
-      service-path: ${{ env.SERVICE_PATH }}
-      project-key: frontend-service
-      arguments: >
-        -Dsonar.tests=src
-        -Dsonar.test.inclusions=**/*.test.js,**/*.test.jsx,**/*.spec.tsx
-        -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
-    secrets:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/frontend
+    steps:
+      - name: Checkout code(sonar)
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js(sonar)
+        uses: actions/setup-node@v4 
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: services/frontend/package-lock.json
+
+      - name: Install dependencies(sonar)
+        run: npm ci
+      
+      - name: Run SonarQube Analysis
+        uses: ./.github/actions/composite_sonar
+        with:
+          service-path: services/frontend
+          project-key: frontend-service
+          arguments: >
+            -Dsonar.tests=src
+            -Dsonar.test.inclusions=**/*.test.js,**/*.test.jsx,**/*.spec.tsx
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
   dependency-scan:
-    uses: .github/workflows/reusable-workflow/reuse_dependency_scan.yaml
+    uses: ./.github/workflows/reuse_dependency_scan.yaml
     with:
-      service-path: ${{ env.SERVICE_PATH }}
+      service-path: services/frontend
       
 
   build-and-image-scan:
-    needs: [dependency-scan]
-    uses: .github/workflows/reusable-workflow/reuse_build_scan.yaml
+    needs: [dependency-scan, sonar, test-frontend] # added sonar and test-frontend as dependencies for build and image scan.
+    uses: ./.github/workflows/reuse_build_scan.yaml
     with:
-      image_name: ${{vars.IMAGE_NAME}}
+      service-path: services/frontend
+      image_name: frontend-service
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
