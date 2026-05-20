@@ -79,7 +79,7 @@ jobs:
       
 
   build-and-image-scan:
-    needs: [dependency-scan]
+    needs: [dependency-scan, sonar, test-python] # added sonar and test-login as dependencies for build and image scan.
     uses: ./.github/workflows/reuse_build_scan.yaml
     with:
       service-path: services/order

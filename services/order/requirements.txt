@@ -6,3 +6,4 @@ pydantic
 python-json-logger
 pika
 kafka-python
+pytest
