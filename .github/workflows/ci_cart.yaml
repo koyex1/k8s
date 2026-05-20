@@ -19,7 +19,7 @@ on: # a pull request from feature branch(this is the branch that developers work
       - 'services/cart/**'
 
 env:
-  GO_VERSION: 1.22
+  GO_VERSION: 1.26
 
 jobs:
   test-go:
