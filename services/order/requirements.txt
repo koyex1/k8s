@@ -7,3 +7,4 @@ python-json-logger
 pika
 kafka-python
 pytest
+pytest-cov
