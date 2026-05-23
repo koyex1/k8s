@@ -7,3 +7,5 @@ variable "allowed_ssh_cidr" {
   # CHANGE THIS IN PROD. to find the ip use this command curl 
   default = ["0.0.0.0/0"]
 }
+
+variable "env" {}

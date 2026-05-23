@@ -1,6 +1,5 @@
 module "vpc" {
   source = "../../modules/aws-vpc"
-
   env          = var.env
   cluster_name = var.cluster_name
 
@@ -24,14 +23,16 @@ module "security" {
 
   vpc_id = module.vpc.vpc_id
 
+  env = var.env
+
   allowed_ssh_cidr = ["0.0.0.0/0"] # my ip ["YOUR-IP/32"] lock this down
 }
 
 module "eks" {
   source = "../../modules/aws-eks"
 
-  cluster_name    = env.cluster_name
-  cluster_version = "1.29"
+  cluster_name    = var.cluster_name
+  cluster_version = "1.34" #1.36
   env             = var.env
 
   vpc_id             = module.vpc.vpc_id
@@ -42,7 +43,7 @@ module "eks" {
   eks_cluster_role_arn = module.iam.eks_cluster_role_arn
   eks_node_role_arn    = module.iam.nodegroup_role_arn
 
-  instance_types = ["t3.medium"]
+  instance_types = ["c7i-flex.large"] # has a vcpu of 2 and a RAM of 4GB.
 
   min_capacity_on_demand     = 1
   max_capacity_on_demand     = 2
@@ -55,11 +56,13 @@ module "iam" {
 
   cluster_name      = var.cluster_name
   oidc_provider_arn = module.eks.oidc_provider_arn
-  oidc_provider_url = module.eks.oidc_provider
+  oidc_provider_url = startswith(module.eks.oidc_provider, "https://") ? module.eks.oidc_provider : "https://${module.eks.oidc_provider}"
 }
 
 module "bastion" {
   source = "../../modules/aws-bastion"
+
+  env = var.env
 
   image_id      = "ami-0ec10929233384c7f"
   instance_type = "t3.micro"
@@ -74,11 +77,27 @@ module "bastion" {
 
   key_name = "devopspemkey" # get a keypair 
 
-  user_data = file("${path.module}/user-data.sh")
+  user_data = file("../../modules/aws-bastion/user-data.sh")
 
   tags = {
     Environment = "dev"
   }
+}
+
+module "alb-controller" {
+  source = "../../modules/helm-alb-controller"
+
+  cluster_name            = var.cluster_name
+  region                  = var.region
+  vpc_id                  = module.vpc.vpc_id
+  alb_controller_irsa_arn = module.iam.alb_role_arn
+  alb_dependency = [module.alb_controller_service_account, module.iam.alb_role_arn]
+}
+
+module "argocd" {
+  source = "../../modules/helm-argocd"
+
+  argo_dependency = [ module.alb-controller ]
 }
 
 module "atlantis" {
@@ -88,11 +107,36 @@ module "atlantis" {
 
   repo_allowlist = "github.com/koyex1/*"
 
-  github_user           = "your-github-username"
-  github_token          = "your-github-token"
-  github_webhook_secret = "your-webhook-secret"
+  #github credentials for atlantis to access the repo and manage PRs. Make sure to store these securely and not hardcode in production.
 
-  atlantis_url = "http://your-atlantis-url"
+  terraform_version = "1.14.8"
 
-  alb_dependency = helm_release.aws-load-balancer-controller
+  atlantis_url = "http://your-atlantis-url" 
+
+  alb_dependency = module.alb-controller
 }
+
+module karpenter {
+  source = "../../modules/helm-karpenter"
+
+  cluster_name            = var.cluster_name
+  cluster_endpoint        = module.eks.cluster_endpoint
+  karpenter_role_arn      = module.iam.karpenter_role_arn
+  karpenter_instance_profile = module.iam.karpenter_instance_profile
+
+  karpenter_dependency = [module.eks, module.iam]
+}
+
+
+module "prometheus" {
+  source = "../../modules/helm-prometheus"
+}
+
+module "alb_controller_service_account" {
+  source = "../../modules/kubernetes-serviceAccount"
+
+  clustername_dependency  = var.cluster_name
+  alb_controller_irsa_arn = module.iam.alb_role_arn
+}
+
+

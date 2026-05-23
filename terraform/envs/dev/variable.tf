@@ -12,3 +12,8 @@ variable "cluster_name" {
   description = "The name of the EKS cluster"
   type        = string
 }
+
+variable "terraform_version" {
+  description = "The version of Terraform to use"
+  type        = string
+}

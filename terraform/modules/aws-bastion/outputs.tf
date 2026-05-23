@@ -3,7 +3,8 @@ output "bastion_id" {
 }
 
 output "public_ip" {
-  value = try(aws_eip.bastion_eip[0].public_ip, null)
+  #value = try(aws_eip.bastion_eip[0].public_ip, null)
+  value = "nothing for now"
 }
 
 output "private_ip" {

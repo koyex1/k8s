@@ -1,13 +1,13 @@
 # to create service account for alb controller we need kubernetes provider
-resource "kubernetes_service_account" "alb_controller_sa" {
+resource "kubernetes_service_account_v1" "alb_controller_sa" {
   metadata {
     name      = "aws-load-balancer-controller"
     namespace = "kube-system"
     annotations = {
-      "eks.amazonaws.com/role-arn" = var.alb_controller_role.arn
+      "eks.amazonaws.com/role-arn" = var.alb_controller_irsa_arn
     }
   }
-  depends_on = [module.eks.cluster_name]
+  depends_on = [var.clustername_dependency]
 }
 # to create service account for alb controller we need kubernetes provider
 # resource "kubernetes_service_account" "alb_controller_sa" {
@@ -21,3 +21,4 @@ resource "kubernetes_service_account" "alb_controller_sa" {
 #   depends_on = [aws_eks_cluster.my_cluster, aws_eks_node_group.ondemand_nodes]
 # }
 
+ 

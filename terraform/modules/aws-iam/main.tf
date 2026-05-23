@@ -3,24 +3,36 @@ resource "random_integer" "suffix" {
   max = 9999
 }
 
+#iam roles are for 
+#ekscluster
+#eksnodegroup
+#pods(controllers) that triggers the creation of aws loadbalancer via irserviceaccount
+#pods that create aws nodes via karpenter via irserviceaccount
+#pods that need to access aws resources via irserviceaccount
+#thenodes created - profile & iam 
+#bastion nodes - profile & iam
+
 module "eks_cluster_role" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role"
-  version = "5.39.0"
+  version = "6.3.0"
 
   name = "${var.cluster_name}-eks-cluster-role-${random_integer.suffix.result}"
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Principal = {
-        Service = "eks.amazonaws.com"
-      }
-      Action = "sts:AssumeRole"
-    }]
-  })
-  
-  attach_policies = true
+  trust_policy_permissions = {
+    EKSAssumeRole = {
+      actions = [
+        "sts:AssumeRole"
+      ]
+
+      principals = [{
+        type = "Service"
+        identifiers = [
+          "eks.amazonaws.com"
+        ]
+      }]
+    }
+  }
+
 
   policies = {
     AmazonEKSClusterPolicy = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
@@ -29,22 +41,25 @@ module "eks_cluster_role" {
 
 module "eks_nodegroup_role" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role"
-  version = "5.39.0"
+  version = "6.3.0"
 
   name = "${var.cluster_name}-nodegroup-role-${random_integer.suffix.result}"
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Principal = {
-        Service = "ec2.amazonaws.com"
-      }
-      Action = "sts:AssumeRole"
-    }]
-  })
+  trust_policy_permissions = {
+    EKSAssumeRole = {
+      actions = [
+        "sts:AssumeRole"
+      ]
 
-  attach_policies = true
+      principals = [{
+        type = "Service"
+        identifiers = [
+          "ec2.amazonaws.com"
+        ]
+      }]
+    }
+  }
+
 
   policies = {
     WorkerNodePolicy = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
@@ -59,7 +74,7 @@ module "eks_nodegroup_role" {
 # AWS Load Balancer Controller — a pod running inside your Kubernetes cluster that watches for Service or Ingress resources and creates AWS load balancers in response
 module "oidc_provider" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-oidc-provider"
-  version = "5.39.0"
+  version = "6.3.0"
 
   url = var.oidc_provider_url
 
@@ -67,11 +82,12 @@ module "oidc_provider" {
 }
 
 # the iam policy attached to the alb_irsa module is the string "attach_load_balancer_controller_policy" which is a variable in the module that when set to true will attach the correct policy for the alb controller to work.
+# irserviceaccount for alb controller not alb
 module "alb_irsa" {
-  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  version = "5.39.0"
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts"
+  version = "6.3.0"
 
-  role_name = "${var.cluster_name}-alb-controller-${random_integer.suffix.result}"
+  name = "${var.cluster_name}-alb-controller-${random_integer.suffix.result}"
 
   #since it is not attach_policies but attach_load_balancer_controller_policy, then you do have to create a policies object.
   attach_load_balancer_controller_policy = true
@@ -84,12 +100,12 @@ module "alb_irsa" {
   }
 }
 
-module "custom_irsa" {
-  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  version = "5.39.0"
+module "custom_irsa" {# example of pod using s3 is an ecommerce application that needs to list buckets and get bucket location to know where to store the images of the products.
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts"
+  version = "6.3.0"
 
-  role_name = "eks-custom-irsa-${random_integer.suffix.result}"
-  
+  name = "eks-custom-irsa-${random_integer.suffix.result}"
+
   oidc_providers = {
     main = {
       provider_arn               = var.oidc_provider_arn
@@ -100,17 +116,21 @@ module "custom_irsa" {
   # role_policy_arns = {
   #   custom = aws_iam_policy.custom_policy.arn
   # }
-  inline_policy_statements = [#reasom why you will want
-    {
-      effect = "Allow"
+  inline_policy_permissions = {
+    s3_access = {
+      sid = "S3Access"
+
       actions = [
         "s3:ListAllMyBuckets",
         "s3:GetBucketLocation"
       ]
+
       resources = ["*"]
     }
-  ]
+  }
+
 }
+
 
 # resource "aws_iam_policy" "custom_policy" {
 #   name = "custom-irsa-policy"
@@ -130,23 +150,24 @@ module "custom_irsa" {
 
 module "bastion_role" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role"
-  version = "5.39.0"
+  version = "6.3.0"
 
   name = "${var.cluster_name}-bastion-role-${random_integer.suffix.result}"
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Principal = {
-        Service = "ec2.amazonaws.com"
-      }
-      Action = "sts:AssumeRole"
-    }]
-  })
+  trust_policy_permissions = {
+    EKSAssumeRole = {
+      actions = [
+        "sts:AssumeRole"
+      ]
 
-  attach_policies = true
-
+      principals = [{
+        type = "Service"
+        identifiers = [
+          "ec2.amazonaws.com"
+        ]
+      }]
+    }
+  }
   policies = {
     SSM = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
   }
@@ -154,13 +175,14 @@ module "bastion_role" {
 
 resource "aws_iam_instance_profile" "bastion_profile" {
   name = "${var.cluster_name}-bastion-profile-${random_integer.suffix.result}"
-  role = module.bastion_role.iam_role_name
+  role = module.bastion_role.name
 }
 
 module "karpenter_irsa" {
-  source = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts"
+  version = "6.3.0"
 
-  role_name = "karpenter-${random_integer.suffix.result}"
+  name = "karpenter-${random_integer.suffix.result}"
 
   oidc_providers = {
     main = {
@@ -169,9 +191,87 @@ module "karpenter_irsa" {
     }
   }
 
-  attach_karpenter_controller_policy = true
+  inline_policy_permissions = {
+    KarpenterController = {
+      sid    = "KarpenterCorePermissions"
+      effect = "Allow"
+
+      actions = [
+        # EC2 lifecycle
+        "ec2:RunInstances",
+        "ec2:TerminateInstances",
+        "ec2:CreateFleet",
+
+        # Instance discovery
+        "ec2:DescribeInstances",
+        "ec2:DescribeInstanceTypes",
+        "ec2:DescribeImages",
+        "ec2:DescribeSubnets",
+        "ec2:DescribeSecurityGroups",
+        "ec2:DescribeLaunchTemplates",
+        "ec2:DescribeAvailabilityZones",
+        "ec2:DescribeSpotPriceHistory",
+        "ec2:DescribeInstanceTypeOfferings",
+
+        # Tagging (CRITICAL for Karpenter)
+        "ec2:CreateTags",
+        "ec2:DeleteTags",
+
+        # Networking
+        "ec2:DescribeNetworkInterfaces",
+
+        # Capacity / Spot
+        "ec2:DescribeCapacityReservations",
+        "ec2:DescribeCapacityReservationFleets",
+
+        # Pricing (for decisions)
+        "pricing:GetProducts",
+
+        # IAM (instance profiles)
+        "iam:PassRole"
+      ]
+
+      resources = ["*"]
+    }
+
+  }
+
 }
 
+module "karpenter_node_role" {
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role"
+  version = "6.3.0"
+
+  name = "karpenter-node-role-${random_integer.suffix.result}"
+
+  trust_policy_permissions = {
+    EKSAssumeRole = {
+      actions = [
+        "sts:AssumeRole"
+      ]
+
+      principals = [{
+        type = "Service"
+        identifiers = [
+          "ec2.amazonaws.com"
+        ]
+      }]
+    }
+  }
+
+
+  policies = {
+    WorkerNodePolicy = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+    CNI              = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+    ECR              = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+    SSM              = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+  }
+}
+
+resource "aws_iam_instance_profile" "karpenter" {
+  name = "karpenter-instance-profile-${random_integer.suffix.result}"
+  role = module.karpenter_node_role.name
+}
 
 # locals {
 #   cluster_name = var.cluster_name

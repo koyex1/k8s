@@ -25,3 +25,5 @@ variable "tags" {
 }
 
 variable "user_data" {}
+
+variable "env" {}

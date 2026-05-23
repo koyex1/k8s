@@ -8,6 +8,8 @@ variable "github_user" {}
 variable "github_token" {}
 variable "github_webhook_secret" {}
 
+variable "terraform_version" {}
+
 variable "atlantis_url" {}
 
 variable "alb_dependency" {

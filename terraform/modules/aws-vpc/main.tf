@@ -2,7 +2,7 @@ module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "5.1.0"
 
-  name = "vpc-${var.env}-${terraform.workspace}"
+  name = "vpc-${var.env}"
   cidr = var.vpc_cidr_block
 
   azs = slice(data.aws_availability_zones.available.names, 0, length(var.public_subnet))
@@ -10,13 +10,11 @@ module "vpc" {
   public_subnets  = var.public_subnet
   private_subnets = var.private_subnet
 
-  enable_dns_support   = true
-  enable_dns_hostnames = true
+  enable_dns_support   = true # this is required for EKS to work properly, it allows the instances in the VPC to resolve DNS names, which is essential for communication between the nodes and the control plane.
+  enable_dns_hostnames = true # this is required for EKS to work properly, it allows the instances in the VPC to have DNS hostnames, which is essential for communication between the nodes and the control plane.
 
   enable_nat_gateway = true
   single_nat_gateway = true # cost optimized (1 NAT)
-
-  enable_internet_gateway = true
 
   # 🔥THIS IS CRITICAL FOR EKS
   public_subnet_tags = {
@@ -26,11 +24,11 @@ module "vpc" {
 
   private_subnet_tags = {
     "kubernetes.io/role/internal-elb"           = "1"
-    "kubernetes.io/cluster/${var.cluster_name}" = "owned"
+    "kubernetes.io/cluster/${var.cluster_name}" = "owned" # owned means that the cluster is responsible for deleting the subnets when the cluster is deleted, if you set it to shared then the cluster will not delete the subnets when the cluster is deleted.
   }
 
   tags = {
-    environment = "${var.env}-${terraform.workspace}"
+    environment = var.env
     Terraform   = "true"
   }
 }
@@ -48,8 +46,8 @@ module "vpc" {
 #   enable_dns_support   = true
 
 #   tags = {
-#     Name        = "vpc-${var.env}-${terraform.workspace}"
-#     environment = "${var.env}-${terraform.workspace}"
+#     Name        = "vpc-${var.env}-${var.env}"
+#     environment = "${var.env}-${var.env}"
 #   }
 # }
 
@@ -98,7 +96,7 @@ module "vpc" {
 #   vpc_id = aws_vpc.main.id
 
 #   tags = {
-#     Name                                        = "igw-${var.env}-${terraform.workspace}"
+#     Name                                        = "igw-${var.env}-${var.env}"
 #     env                                         = var.env
 #     "kubernetes.io/cluster/${var.cluster_name}" = "owned"
 #   }
@@ -112,7 +110,7 @@ module "vpc" {
 #   domain = "vpc"
 
 #   tags = {
-#     Name = "nat_eip-${var.env}-${terraform.workspace}"
+#     Name = "nat_eip-${var.env}-${var.env}"
 #   }
 
 #   depends_on = [aws_vpc.main]
@@ -124,7 +122,7 @@ module "vpc" {
 #   subnet_id     = aws_subnet.public_subnet[0].id
 
 #   tags = {
-#     Name = "nat_gw-${var.env}-${terraform.workspace}"
+#     Name = "nat_gw-${var.env}-${var.env}"
 #   }
 
 #   depends_on = [aws_vpc.main, aws_eip.nat_eip]
@@ -142,7 +140,7 @@ module "vpc" {
 #   }
 
 #   tags = {
-#     Name = "public_rt-${var.env}-${terraform.workspace}"
+#     Name = "public_rt-${var.env}-${var.env}"
 #     env  = var.env
 #   }
 
@@ -170,7 +168,7 @@ module "vpc" {
 #   }
 
 #   tags = {
-#     Name = "private_rt-${var.env}-${terraform.workspace}"
+#     Name = "private_rt-${var.env}-${var.env}"
 #     env  = var.env
 #   }
 

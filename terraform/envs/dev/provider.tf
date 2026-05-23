@@ -1,12 +1,12 @@
 provider "aws" {
-    region = var.region
+  region = var.region
 
-    default_tags {
-      tags = {
-        Environment = terraform.workspace
-        Project = "eks-platform"
-      }
+  default_tags {
+    tags = {
+      Environment = var.env
+      Project     = "eks-platform"
     }
+  }
 }
 
 provider "kubernetes" {
@@ -14,21 +14,22 @@ provider "kubernetes" {
   cluster_ca_certificate = base64decode(module.eks.cluster_ca)
   token                  = data.aws_eks_cluster_auth.cluster.token
   exec {
+    api_version = "client.authentication.k8s.io/v1"
     command = "aws"
-    args = ["eks", "get-token", "--cluster-name", module.eks.cluster_name]
+    args    = ["eks", "get-token", "--cluster-name", module.eks.cluster_name]
   }
 }
 
 provider "helm" {
-  kubernetes {
+  kubernetes = {
     host                   = module.eks.cluster_endpoint
     cluster_ca_certificate = base64decode(module.eks.cluster_ca)
     token                  = data.aws_eks_cluster_auth.cluster.token
-  }
-  exec{
-    api_version = "client.authentication.k8s.io/v1beta1"
-    command = "aws"
-    args = ["eks", "get-token", "--cluster-name", module.eks.cluster_name]
+    exec = {
+      api_version = "client.authentication.k8s.io/v1"
+      command     = "aws"
+      args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name]
 
+    }
   }
 }

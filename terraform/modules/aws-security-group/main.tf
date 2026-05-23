@@ -1,12 +1,9 @@
-############################################
 # Bastion Security Group
-############################################
-
 module "bastion_sg" {
   source  = "terraform-aws-modules/security-group/aws"
   version = "5.1.0"
 
-  name        = "bastion-sg-${terraform.workspace}"
+  name        = "bastion-sg-${var.env}"
   description = "Allow SSH to Bastion"
   vpc_id      = var.vpc_id
 
@@ -17,19 +14,16 @@ module "bastion_sg" {
   egress_rules = ["all-all"]
 
   tags = {
-    Name = "bastion-sg-${terraform.workspace}"
+    Name = "bastion-sg-${var.env}"
   }
 }
 
-############################################
 # EKS Cluster Security Group
-############################################
-
 module "eks_cluster_sg" {
   source  = "terraform-aws-modules/security-group/aws"
   version = "5.1.0"
 
-  name        = "eks-cluster-sg-${terraform.workspace}"
+  name        = "eks-cluster-sg-${var.env}"
   description = "Allow 443 from Bastion only"
   vpc_id      = var.vpc_id
 
@@ -47,13 +41,13 @@ module "eks_cluster_sg" {
   egress_rules = ["all-all"]
 
   tags = {
-    Name = "eks-cluster-sg-${terraform.workspace}"
+    Name = "eks-cluster-sg-${var.env}"
   }
 }
 
 
 # resource "aws_security_group" "eks-cluster-sg" {
-#   name        = "eks-cluster-sg-${terraform.workspace}"
+#   name        = "eks-cluster-sg-${var.env}"
 #   description = "Allow 443 from Jump Server only"
 
 #   vpc_id = var.vpc_id
@@ -73,12 +67,12 @@ module "eks_cluster_sg" {
 #   }
 
 #   tags = {
-#     Name = "eks-cluster-sg-${terraform.workspace}"
+#     Name = "eks-cluster-sg-${var.env}"
 #   }
 # }
 
 # resource "aws_security_group" "bastion-sg" {
-#   name        = "bastion-sg-${terraform.workspace}"
+#   name        = "bastion-sg-${var.env}"
 #   description = "Allow SSH to Bastion"
 #   vpc_id      = var.vpc_id
 
@@ -97,6 +91,6 @@ module "eks_cluster_sg" {
 #   }
 
 #   tags = {
-#     Name = "bastion-sg-${terraform.workspace}"
+#     Name = "bastion-sg-${var.env}"
 #   }
 # }

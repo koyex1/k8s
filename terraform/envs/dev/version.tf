@@ -1,9 +1,9 @@
 terraform {
-  required_version = "value"
+  required_version = "1.14.8"
 
   backend "s3" {
-    bucket         = "eks-olu-tf-state"
-    dynamodb_table = "terraform-locks"
+    bucket         = "eks-olu-tf-state-bucket"
+    dynamodb_table = "eks-terraform-lock-table"
     key            = "security/dev/terraform.tfstate"
     region         = "us-east-1"
     encrypt        = true

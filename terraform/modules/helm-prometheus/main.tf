@@ -2,7 +2,7 @@ resource "helm_release" "prometheus-helm" {
   name             = "prometheus"
   repository       = "https://prometheus-community.github.io/helm-charts"
   chart            = "kube-prometheus-stack"
-  version          = "81.0.0"
+  version          = "83.7.0"
   namespace        = "prometheus"
   create_namespace = true
   cleanup_on_fail  = true
@@ -11,51 +11,47 @@ resource "helm_release" "prometheus-helm" {
 
   timeout = 2000
 
-  set {
-    name  = "podSecurityPolicy.enabled"
-    value = true
-  }
-
-  set {
-    name  = "server.persistentVolume.enabled"
-    value = true
-  }
-
-  set {
-    name  = "grafana.service.type"
-    value = "LoadBalancer"
-  }
-
-  set {
-    name  = "grafana.service.annotations.service\\.beta\\.kubernetes\\.io/aws-load-balancer-scheme"
-    value = "internet-facing"
-  }
-
-# AWS Load Balancer Controller — a pod running inside your Kubernetes cluster that watches for Service or Ingress resources and creates AWS load balancers in response
-  set {
-    name  = "prometheus.service.type"
-    value = "LoadBalancer"
-  }
-
-  set {
-    name  = "prometheus.service.annotations.service\\.beta\\.kubernetes\\.io/aws-load-balancer-scheme"
-    value = "internet-facing"
-  }
+  set = [
+    {
+      name  = "podSecurityPolicy.enabled"
+      value = true
+    },
+    {
+      name  = "server.persistentVolume.enabled"
+      value = true
+    },
+    {
+      name  = "grafana.service.type"
+      value = "LoadBalancer"
+    },
+    {
+      name  = "grafana.service.annotations.service\\.beta\\.kubernetes\\.io/aws-load-balancer-scheme"
+      value = "internet-facing"
+    },
+    { # AWS Load Balancer Controller — a pod running inside your Kubernetes cluster that watches for Service or Ingress resources and creates AWS load balancers in response
+      name  = "prometheus.service.type"
+      value = "LoadBalancer"
+    },
+    {
+      name  = "prometheus.service.annotations.service\\.beta\\.kubernetes\\.io/aws-load-balancer-scheme"
+      value = "internet-facing"
+    }
+  ]
 
   values = [
-  yamlencode({
-    prometheus = {
-      prometheusSpec = {
-        resources = {
-          requests = {
-            cpu    = "500m"
-            memory = "1Gi"
+    yamlencode({
+      prometheus = {
+        prometheusSpec = {
+          resources = {
+            requests = {
+              cpu    = "500m"
+              memory = "1Gi"
+            }
           }
         }
       }
-    }
-  })
-]
+    })
+  ]
 }
 
 data "kubernetes_service_v1" "prometheus_server" {
@@ -63,6 +59,7 @@ data "kubernetes_service_v1" "prometheus_server" {
     name      = "prometheus-kube-prometheus-prometheus"
     namespace = "prometheus"
   }
+  depends_on = [helm_release.prometheus-helm]
 }
 
 data "kubernetes_service_v1" "grafana_server" {
@@ -70,6 +67,7 @@ data "kubernetes_service_v1" "grafana_server" {
     name      = "prometheus-grafana"
     namespace = "prometheus"
   }
+  depends_on = [helm_release.prometheus-helm]
 }
 
 

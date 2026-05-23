@@ -8,11 +8,11 @@ resource "aws_instance" "bastion" {
 # used to assign public ip to the bastion host if it is in a public subnet and we want to access it directly without using ssm session manager. if the bastion host is in a private subnet then we will not assign public ip and we will use ssm session manager to connect to the bastion host.
   associate_public_ip_address = var.associate_public_ip
 
-# key name her is the key pair name.
+# key name here is the key pair name.
   key_name = var.key_name
 
 # this is a provisioner that runs a script to install the following listed in the script file: ssm agent, kubectl, aws cli, argocd cli, eksctl cli.
-  user_data = base64encode(var.user_data)
+  user_data_base64 = base64encode(var.user_data)
 
   metadata_options {
     http_tokens = "required" # IMDSv2 enforced
@@ -26,11 +26,11 @@ resource "aws_instance" "bastion" {
   tags = merge(
     var.tags,
     {
-      Name = "bastion-${terraform.workspace}"
+      Name = "bastion-${var.env}"
     }
   )
 }
-
+#
 #resource "aws_eip" "bastion_eip" {
 #  count = var.enable_eip ? 1 : 0
 #

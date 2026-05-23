@@ -1,20 +1,20 @@
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "20.8.0"
+  version = "~> 21.0"
 
-  cluster_name    = var.cluster_name
-  cluster_version = var.cluster_version
+  name    = var.cluster_name
+  kubernetes_version = var.cluster_version
 
   # NETWORK
   vpc_id     = var.vpc_id
   subnet_ids = var.private_subnet_ids
 
   # API ACCESS (SECURE)
-  cluster_endpoint_private_access = true
-  cluster_endpoint_public_access  = false # This is used to make public access to the cluster API endpoint disabled. only accessible via bastion.
+  endpoint_private_access = true
+  endpoint_public_access  = false # This is used to make public access to the cluster API endpoint disabled. only accessible via bastion.
 
   # SECURITY GROUP
-  cluster_additional_security_group_ids = var.security_group_ids
+  additional_security_group_ids = var.security_group_ids
 
   # IAM
   create_iam_role = false
@@ -28,7 +28,7 @@ module "eks" {
 
   # ADDONS
 
-  cluster_addons = {
+  addons = {
     coredns = {
       most_recent = true
     }
