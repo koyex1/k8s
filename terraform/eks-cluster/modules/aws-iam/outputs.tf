@@ -10,6 +10,10 @@ output "alb_role_arn" {
   value = module.alb_irsa.arn
 }
 
+output "ebs_csi_role_arn" {
+  value = module.ebs_csi_irsa.arn
+}
+
 output "bastion_instance_profile" {
   value = aws_iam_instance_profile.bastion_profile.name
 }

@@ -9,3 +9,6 @@ variable "allowed_ssh_cidr" {
 }
 
 variable "env" {}
+
+variable "cluster_security_group_id" {}
+variable "nodes_security_group_id" {}

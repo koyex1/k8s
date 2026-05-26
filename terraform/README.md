@@ -41,6 +41,12 @@ checkov- SAST. alerts about publicly exposed s3 buckets, unencrypted RDS instanc
 you can either use kubernetes provider to create a service account. or you create one with the helm of that resource(karpenter, alb controller) by provider a value to the serviceAccount.name 
 note a serviceaccount needs to bind a role to it. but since we are not dealing with k8s roles here but aws iam roles. then we will be binding aws iam roles to these service accounts.
 
+# varialbe files are auto when
+terraform.tfvars or *.auto.tfvars
+
+# not auto for
+dev.tfvars
+
 name: DevOps Pipeline
 
 on:

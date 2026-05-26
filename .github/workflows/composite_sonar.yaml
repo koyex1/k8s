@@ -1,0 +1,39 @@
+name: "Composite Sonar Scan"
+
+inputs:
+  service-path:
+    required: true
+    type: string
+
+  project-key:
+    required: true
+    type: string
+
+  arguments:
+    required: true
+    type: string
+
+  command:
+    required: false
+    type: string
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Build project
+      if: ${{ inputs.command != '' }}
+      run: ${{ inputs.command }} #correction 11. added build step for sonar.java.binaries flag to find target/classes for sonar analysis.
+
+    - name: SonarQube Scan
+      uses: sonarsource/sonarqube-scan-action@v2
+      with:
+        projectBaseDir: ${{ inputs.service-path }}
+        args: >
+          -Dsonar.projectKey=${{inputs.project-key}}
+          ${{ inputs.arguments}}
+      env:
+        SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+        SONAR_HOST_URL: ${{ env.SONAR_HOST_URL }}

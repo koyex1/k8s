@@ -72,14 +72,14 @@ module "eks_nodegroup_role" {
 # OIDC (IRSA ENABLED) - ie use eks as identity provider through OIDC that pods can use to authenticate to AWS services - in our own case 
 #ALB ingress controller pod will use this to authenticate to AWS and create ALB resources. 
 # AWS Load Balancer Controller — a pod running inside your Kubernetes cluster that watches for Service or Ingress resources and creates AWS load balancers in response
-module "oidc_provider" {
-  source  = "terraform-aws-modules/iam/aws//modules/iam-oidc-provider"
-  version = "6.3.0"
+# module "oidc_provider" {
+#   source  = "terraform-aws-modules/iam/aws//modules/iam-oidc-provider"
+#   version = "6.3.0"
 
-  url = var.oidc_provider_url
+#   url = var.oidc_provider_url
 
-  client_id_list = ["sts.amazonaws.com"]
-}
+#   client_id_list = ["sts.amazonaws.com"]
+# }
 
 # the iam policy attached to the alb_irsa module is the string "attach_load_balancer_controller_policy" which is a variable in the module that when set to true will attach the correct policy for the alb controller to work.
 # irserviceaccount for alb controller not alb
@@ -87,7 +87,7 @@ module "alb_irsa" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts"
   version = "6.3.0"
 
-  name = "${var.cluster_name}-alb-controller-${random_integer.suffix.result}"
+  name = "${var.cluster_name}-alb-controller-irsa${random_integer.suffix.result}"
 
   #since it is not attach_policies but attach_load_balancer_controller_policy, then you do have to create a policies object.
   attach_load_balancer_controller_policy = true
@@ -96,6 +96,23 @@ module "alb_irsa" {
     main = {
       provider_arn               = var.oidc_provider_arn
       namespace_service_accounts = ["kube-system:aws-load-balancer-controller"] #namepsace : serviceaccount
+    }
+  }
+}
+
+# EBS CSI Driver IRSA - Required for addon to access AWS APIs
+module "ebs_csi_irsa" {
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts"
+  version = "6.3.0"
+
+  name = "${var.cluster_name}-ebs-csi-irsa-${random_integer.suffix.result}"
+
+  attach_ebs_csi_policy = true
+
+  oidc_providers = {
+    main = {
+      provider_arn               = var.oidc_provider_arn
+      namespace_service_accounts = ["kube-system:ebs-csi-controller-sa"]
     }
   }
 }

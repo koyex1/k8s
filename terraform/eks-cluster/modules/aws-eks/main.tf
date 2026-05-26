@@ -2,7 +2,7 @@ module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 21.0"
 
-  name    = var.cluster_name
+  name               = var.cluster_name
   kubernetes_version = var.cluster_version
 
   # NETWORK
@@ -14,7 +14,7 @@ module "eks" {
   endpoint_public_access  = false # This is used to make public access to the cluster API endpoint disabled. only accessible via bastion.
 
   # SECURITY GROUP
-  additional_security_group_ids = var.security_group_ids
+  # security_group_id = var.cluster_security_group_id
 
   # IAM
   create_iam_role = false
@@ -24,6 +24,7 @@ module "eks" {
   #ALB ingress controller pod will use this to authenticate to AWS and create ALB resources. 
   # AWS Load Balancer Controller — a pod running inside your Kubernetes cluster that watches for Service or Ingress resources and creates AWS load balancers in response
   # OIDC (IRSA ENABLED)
+  # this set to true auto-creates an OIDC provider. so no need creating it separately.
   enable_irsa = true
 
   # ADDONS
@@ -36,38 +37,42 @@ module "eks" {
       most_recent = true
     }
     vpc-cni = {
-      most_recent = true
+      most_recent    = true
+      before_compute = true
     }
     aws-ebs-csi-driver = {
-      most_recent = true
+      most_recent              = true
+      service_account_role_arn = var.ebs_csi_role_arn
     }
   }
 
   # NODE GROUPS (YOUR LOGIC KEPT)
   eks_managed_node_groups = {
 
-  baseline = {
-    name = "${var.cluster_name}-baseline"
+    baseline = {
+      name = "${var.cluster_name}-baseline"
 
-    instance_types = [var.instance_types[0]]
-    capacity_type  = "ON_DEMAND"
+      instance_types = [var.instance_types[0]]
+      capacity_type  = "ON_DEMAND"
 
-    min_size     = var.min_capacity_on_demand
-    max_size     = var.max_capacity_on_demand
-    desired_size = var.desired_capacity_on_demand
+      min_size     = var.min_capacity_on_demand
+      max_size     = var.max_capacity_on_demand
+      desired_size = var.desired_capacity_on_demand
 
-     # IAM
-    iam_role_arn = var.eks_node_role_arn
+      key_name = "devopspemkey"
 
-    labels = {
-      type = "baseline"
+      # IAM
+      iam_role_arn = var.eks_node_role_arn
+
+      labels = {
+        type = "baseline"
+      }
     }
   }
-}
 
-// --------------- recommendations ---------------
-# use taints
-#
+  // --------------- recommendations ---------------
+  # use taints
+  #
 
   # eks_managed_node_groups = {
 

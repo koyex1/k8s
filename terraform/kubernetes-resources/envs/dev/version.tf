@@ -3,18 +3,14 @@ terraform {
 
   backend "s3" {
     bucket         = "eks-olu-tf-state-bucket"
-    dynamodb_table = "eks-terraform-lock-table"
-    key            = "security/dev/terraform.tfstate"
+    dynamodb_table = "eks-olu-tf-lock-table"
+    key            = "security/kubernetes-resources/dev/terraform.tfstate"
     region         = "us-east-1"
     encrypt        = true
   }
 
   required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 6.0"
-    }
-    helm = {
+      helm = {
       source  = "hashicorp/helm"
       version = "~> 3.0"
     }
