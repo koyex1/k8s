@@ -24,12 +24,12 @@ resource "helm_release" "atlantis" {
     { # SERVICE (EXPOSE VIA ALB)
       # AWS Load Balancer Controller — a pod running inside your Kubernetes cluster that watches for Service or Ingress resources and creates AWS load balancers in response
       name  = "service.type"
-      value = "LoadBalancer"
+      value = "ClusterIP"
     },
-    {
-      name  = "service.annotations.service\\.beta\\.kubernetes\\.io/aws-load-balancer-scheme"
-      value = "internet-facing"
-    },
+    # {
+    #   name  = "service.annotations.service\\.beta\\.kubernetes\\.io/aws-load-balancer-scheme"
+    #   value = "internet-facing"
+    # },
     { # TERRAFORM VERSION
       name  = "terraformVersion"
       value = var.terraform_version

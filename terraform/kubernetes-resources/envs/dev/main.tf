@@ -1,15 +1,15 @@
 locals {
-  aws-tf-state = local.aws-tf-state
+  aws_tf_state = try(data.terraform_remote_state.current_state.outputs, {})
 }
 
 module "alb-controller" {
   source = "../../modules/helm-alb-controller"
 
-  cluster_name            = local.aws-tf-state.cluster_name
-  region                  = local.aws-tf-state.region
-  vpc_id                  = local.aws-tf-state.vpc_id
-  alb_controller_irsa_arn = local.aws-tf-state.alb_controller_irsa_arn
-  alb_dependency = [module.alb_controller_service_account, local.aws-tf-state.alb_controller_irsa_arn]
+  cluster_name            = local.aws_tf_state.cluster_name
+  region                  = local.aws_tf_state.region
+  vpc_id                  = local.aws_tf_state.vpc_id
+  alb_controller_irsa_arn = local.aws_tf_state.alb_controller_irsa_arn
+  alb_dependency = [module.alb_controller_service_account, local.aws_tf_state.alb_controller_irsa_arn]
 }
 
 module "argocd" {
@@ -21,12 +21,12 @@ module "argocd" {
 module "atlantis" {
   source = "../../modules/helm-atlantis"
 
-  region = local.aws-tf-state.region
+  region = local.aws_tf_state.region
 
-  repo_allowlist = "github.com/koyex1/*"
+  repo_allowlist = "github.com/koyex1/k8s"
 
   #github credentials for atlantis to access the repo and manage PRs. Make sure to store these securely and not hardcode in production.
-  github_user           
+  
   
   terraform_version = "1.14.8"
 
@@ -38,12 +38,12 @@ module "atlantis" {
 module karpenter {
   source = "../../modules/helm-karpenter"
 
-  cluster_name            = local.aws-tf-state.cluster_name
-  cluster_endpoint        = local.aws-tf-state.cluster_endpoint
-  karpenter_role_arn      = local.aws-tf-state.karpenter_role_arn
-  karpenter_instance_profile = local.aws-tf-state.karpenter_instance_profile
+  cluster_name            = local.aws_tf_state.cluster_name
+  cluster_endpoint        = local.aws_tf_state.cluster_endpoint
+  karpenter_role_arn      = local.aws_tf_state.karpenter_role_arn
+  karpenter_instance_profile = local.aws_tf_state.karpenter_instance_profile
 
-  karpenter_dependency = [module.eks, module.iam]
+  karpenter_dependency = [local.aws_tf_state.eks]
 }
 
 
@@ -54,8 +54,8 @@ module "prometheus" {
 module "alb_controller_service_account" {
   source = "../../modules/kubernetes-serviceAccount"
 
-  clustername_dependency  = local.aws-tf-state.cluster_name
-  alb_controller_irsa_arn = local.aws-tf-state.alb_controller_irsa_arn
+  clustername_dependency  = local.aws_tf_state.cluster_name
+  alb_controller_irsa_arn = local.aws_tf_state.alb_controller_irsa_arn
 }
 
 

@@ -20,4 +20,7 @@ data "aws_ami" "amazon_linux" {
   }
 }
 
+data "aws_eks_cluster_auth" "cluster" {
+  name = module.eks.cluster_name
+}
 

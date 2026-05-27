@@ -22,19 +22,19 @@ resource "helm_release" "prometheus-helm" {
     },
     {
       name  = "grafana.service.type"
-      value = "LoadBalancer"
+      value = "ClusterIP"
     },
-    {
-      name  = "grafana.service.annotations.service\\.beta\\.kubernetes\\.io/aws-load-balancer-scheme"
-      value = "internet-facing"
-    },
+    # {
+    #   name  = "grafana.service.annotations.service\\.beta\\.kubernetes\\.io/aws-load-balancer-scheme"
+    #   value = "internet-facing"
+    # },
     { # AWS Load Balancer Controller — a pod running inside your Kubernetes cluster that watches for Service or Ingress resources and creates AWS load balancers in response
       name  = "prometheus.service.type"
-      value = "LoadBalancer"
+      value = "ClusterIP"
     },
     {
       name  = "prometheus.service.annotations.service\\.beta\\.kubernetes\\.io/aws-load-balancer-scheme"
-      value = "internet-facing"
+      value = "false"
     }
   ]
 
@@ -54,21 +54,7 @@ resource "helm_release" "prometheus-helm" {
   ]
 }
 
-data "kubernetes_service_v1" "prometheus_server" {
-  metadata {
-    name      = "prometheus-kube-prometheus-prometheus"
-    namespace = "prometheus"
-  }
-  depends_on = [helm_release.prometheus-helm]
-}
 
-data "kubernetes_service_v1" "grafana_server" {
-  metadata {
-    name      = "prometheus-grafana"
-    namespace = "prometheus"
-  }
-  depends_on = [helm_release.prometheus-helm]
-}
 
 
 #----------------recommendation----------------

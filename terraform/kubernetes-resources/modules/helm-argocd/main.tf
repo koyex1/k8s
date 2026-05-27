@@ -16,7 +16,7 @@ resource "helm_release" "argocd" {
   set = [
     {
       name  = "server.service.type"
-      value = "LoadBalancer" #LoadBalancer #ClusterIP #NodePort
+      value = "ClusterIP" #LoadBalancer #ClusterIP #NodePort
     },
     {
       name  = "server.ingress.enabled"
