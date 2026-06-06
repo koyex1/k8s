@@ -1,0 +1,36 @@
+name: Continuous Delivery 
+
+on:
+  # workflow_run:
+  #   workflows: ["ci cart"]
+  #   types:
+  #     - completed #others are requested, waiting, in_progress, completed.
+  workflow_dispatch:
+    inputs:
+      app_environment:
+        description: 'The environment to deploy to'
+        required: true
+        default: 'production'
+        type: choice
+        options: [dev, test, staging, production]
+      image_tag:
+        description: 'The image tag to deploy'
+        required: false
+      
+jobs:
+  deploy:
+    defaults:
+      run:
+        working-directory: "kubernetes"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [cart, products, order, notification, login, register, frontend]
+    steps:
+      - uses: .github/workflows/actions/composite_deploy
+        with:
+          app_environment: "${{ inputs.app_environment }}"
+          chart_path: "./${ { matrix.service } }-chart"
+          service: "${ { matrix.service } }"
+          image_repository: "koyex1/cart"
+          image_tag: "${{ inputs.image_tag }}" 

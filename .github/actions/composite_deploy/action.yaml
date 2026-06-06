@@ -1,0 +1,59 @@
+name: "Composite Sonar Scan"
+description: "A composite action to perform SonarQube analysis on a specified service path with given arguments."
+
+inputs:
+  app_environment:
+    description: "The path to the service directory to be analyzed by SonarQube."
+    required: true
+
+  chart_path:
+    description: "The SonarQube project key for the analysis."
+    required: true
+  
+  service:
+    description: "microservice name for deployment."
+    required: true
+  
+  image_repository:
+    description: "image repository for deployment."
+    required: false
+    default: ""
+
+  image_tag:
+    description: "image tag for deployment."
+    required: false
+
+
+runs:
+  using: "composite"
+  steps: #deployment cli is ran in server. others like kubectl, google cli 
+      - uses: actions/checkout@v2
+
+      - name: Deploying ${{ inputs.service }} to ${{ inputs.app_environment }} environment
+        uses: bitovi/github-actions-deploy-eks-helm@v1.2.12
+        env:
+          VAULT_ADDR: ${{ secrets.VAULT_ADDR }}      # You provide
+          VAULT_TOKEN: ${{ secrets.VAULT_TOKEN }} 
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+          cluster-name: ${{ vars.CLUSTER_NAME }}
+          cluster-role-arn: ${{ secrets.AWS_ROLE_ARN }}
+          chart-path: ${{ inputs.chart_path }} 
+          helm-wait: true
+          namespace: ${{ inputs.app_environment }}
+          name: ${{ inputs.service }}
+          create-namespace: true
+          use-secrets-vals: true
+          plugins: https://github.com/jkroepke/helm-secrets
+          values: |
+            settings.clusterName=${{ vars.CLUSTER_NAME }},
+            settings.interruptionQueue=${{ vars.CLUSTER_NAME }}-karpenter,
+            controller.resources.requests.cpu=1,
+            controller.resources.requests.memory=1Gi,
+            controller.resources.limits.cpu=1,
+            controller.resources.limits.memory=1Gi
+            image.repository=${{ inputs.image_repository }},
+            settings.image.tag=${{ inputs.image_tag }} 
+          version: 1.0.6

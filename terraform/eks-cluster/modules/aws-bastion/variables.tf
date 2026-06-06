@@ -27,3 +27,18 @@ variable "tags" {
 variable "user_data" {}
 
 variable "env" {}
+
+variable "git_user" {}
+
+variable "git_access_token" {}
+
+variable "webhook_secret" {}
+
+variable "aws_access_key_id" {}
+
+variable "aws_secret_access_key" {}
+
+variable "aws_region" {}
+
+variable "vault_root_token" {}
+  

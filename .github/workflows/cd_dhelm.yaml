@@ -1,0 +1,40 @@
+name: Continuous Deployment
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/cd_dhelm.yaml'
+      - 'kubernetes/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/cd_dhelm.yaml'
+      - 'kubernetes/**'
+jobs:
+  deploy:
+    defaults:
+      run:
+        working-directory: "kubernetes"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [dev, test, staging, production]
+        chart_path: [register, login, notification, order, products, cart, frontend]
+    #if: ${{ github.event.inputs.app_environment == 'dev' }} || ${{ github.event.inputs.app_environment == 'all-environments' }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Deploying ${{ inputs.service }} to ${{ matrix.environment }} environment
+        uses: bitovi/github-actions-deploy-eks-helm@v1.2.12
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+          cluster-name: ${{ vars.CLUSTER_NAME }}
+          cluster-role-arn: ${{ secrets.AWS_ROLE_ARN }}
+          chart-path: ${{ matrix.chart_path }}-chart
+          helm-wait: true
+          namespace: ${{ matrix.app_environment }}
+          name: ${{ inputs.service }}
+          version: 1.0.6

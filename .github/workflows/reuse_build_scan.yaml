@@ -33,13 +33,13 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          docker build -t ${{ inputs.image_name }}:gitAction-${{ github.sha }} .
-          docker tag ${{ inputs.image_name }}:gitAction-${{ github.sha }} ${{ inputs.image_name }}:latest
+          docker build -t ${{ inputs.image_name }}:${{ github.sha }} .
+          docker tag ${{ inputs.image_name }}:${{ github.sha }} ${{ inputs.image_name }}:latest
 
       - name: Trivy Image Scan (SBOM) #Software Bill of Materials
         uses: aquasecurity/trivy-action@0.20.0
         with:
-          image-ref: ${{ inputs.image_name }}:gitAction-${{ github.sha }}
+          image-ref: ${{ inputs.image_name }}:${{ github.sha }}
           format: cyclonedx
           output: sbom.json
           #exit-code: 0 by default, so we can omit it here
@@ -53,7 +53,7 @@ jobs:
       - name: Trivy Image Scan (JSON)
         uses: aquasecurity/trivy-action@0.20.0
         with:
-          image-ref: ${{ inputs.image_name }}:gitAction-${{ github.sha }}
+          image-ref: ${{ inputs.image_name }}:${{ github.sha }}
           format: json
           output: trivy-image-report.json
           severity: CRITICAL,HIGH
@@ -68,7 +68,7 @@ jobs:
       - name: Trivy Image Scan (SARIF) #Static Analysis Results Interchange Format
         uses: aquasecurity/trivy-action@0.20.0
         with:
-          image-ref: ${{ inputs.image_name }}:gitAction-${{ github.sha }}
+          image-ref: ${{ inputs.image_name }}:${{ github.sha }}
           format: sarif
           output: trivy-image.sarif
           #exit-code: 0 by default, so we can omit it here
@@ -80,5 +80,5 @@ jobs:
 
       - name: Push Image
         run: |
-          docker push ${{ inputs.image_name }}:gitAction-${{ github.sha }}
+          docker push ${{ inputs.image_name }}:${{ github.sha }}
           docker push ${{ inputs.image_name }}:latest

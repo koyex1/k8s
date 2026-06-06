@@ -8,7 +8,7 @@ permissions: #permission for reports to be uploaded to GitHub Security tab.
 
 on: # a pull request from feature branch(this is the branch that developers work on) to main branch. then on merge request to main branch, underneath a push event is triggered for main branch.
   push:
-    branches: [main]
+    branches: [main] 
     paths:
       - '.github/workflows/ci_cart.yaml'
       - 'services/cart/**'
@@ -84,7 +84,13 @@ jobs:
     uses: ./.github/workflows/reuse_build_scan.yaml
     with:
       service-path: services/cart
-      image_name: cart-service
+      image_name: koyex1/cart-service
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+
+  deploy:
+    uses: ./.github/workflows/reuse_deploy.yaml
+    with:
+      resource-path: "kubernetes"
+      app_environment: "cart" # empty string means deploy to dev environment, which is the default environment

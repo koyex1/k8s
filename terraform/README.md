@@ -8,7 +8,6 @@ rm -rf .terraform
 rm .terraform.lock.hcl
 terraform init
 
-
 #
 aws eks delete-nodegroup \
   --cluster-name eks-dev \
@@ -24,10 +23,10 @@ terraform apply -auto-approve
 #
 terraform plan
 terraform apply
-terraform refresh #deprecated
-terrafrom plan -refresh-only
-terrafrom apply -refresh-only
-terraform import
+#i deleted an imposter you should know which.
+terrafrom plan -refresh-only  
+terrafrom apply -refresh-only  - update state resources
+terraform import  - add resource to state
 
 
 #
@@ -35,6 +34,10 @@ terraform fmt - identation, spaces, misaligned equals  signs
 terraform validate - missing arguments, incorrect attr name, invalid ref to a resource that doesn't  exist
 tflint - deprecated instance types, missing tags, improper for_each
 checkov- SAST. alerts about publicly exposed s3 buckets, unencrypted RDS instances, overly permissive security group.
+
+#
+terraform force-unlock 163bd9dd-2960-78e3-591a-099f5c294d61
+sudo cat /var/log/cloud-init-output.log
 
 
 # note about service provider

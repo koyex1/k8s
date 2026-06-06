@@ -11,7 +11,7 @@ module "eks" {
 
   # API ACCESS (SECURE)
   endpoint_private_access = true
-  endpoint_public_access  = false # This is used to make public access to the cluster API endpoint disabled. only accessible via bastion.
+  endpoint_public_access  = true # This is used to make public access to the cluster API endpoint disabled. only accessible via bastion.
 
   # SECURITY GROUP
   # security_group_id = var.cluster_security_group_id

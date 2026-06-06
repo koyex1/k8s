@@ -86,6 +86,14 @@ module "bastion" {
 
   user_data = file("../../modules/aws-bastion/user-data.sh")
 
+  git_user           = var.git_user
+  git_access_token   = var.git_access_token
+  webhook_secret     = var.webhook_secret
+  aws_access_key_id     = var.aws_access_key_id
+  aws_secret_access_key = var.aws_secret_access_key
+  aws_region           = var.aws_region
+  vault_root_token     = var.vault_root_token
+
   tags = {
     Environment = "dev"
   }

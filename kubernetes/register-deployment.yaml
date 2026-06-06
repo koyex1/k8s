@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: register-deployment
+  namespace: production #chart
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: register
+  template:
+    metadata:
+      labels:
+        app: register
+    spec:
+      containers:
+        - name: register
+          image: koyex1/register:latest #chart
+          ports:
+            - containerPort: 8080

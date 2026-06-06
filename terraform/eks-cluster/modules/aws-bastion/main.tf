@@ -1,18 +1,27 @@
 resource "aws_instance" "bastion" {
-  ami                         = var.image_id
-  instance_type               = var.instance_type
-  subnet_id                   = var.subnet_id
-  vpc_security_group_ids      = var.security_groups
-  iam_instance_profile        = var.iam_instance_profile_name
+  ami                    = var.image_id
+  instance_type          = var.instance_type
+  subnet_id              = var.subnet_id
+  vpc_security_group_ids = var.security_groups
+  iam_instance_profile   = var.iam_instance_profile_name
 
-# used to assign public ip to the bastion host if it is in a public subnet and we want to access it directly without using ssm session manager. if the bastion host is in a private subnet then we will not assign public ip and we will use ssm session manager to connect to the bastion host.
+  # used to assign public ip to the bastion host if it is in a public subnet and we want to access it directly without using ssm session manager. if the bastion host is in a private subnet then we will not assign public ip and we will use ssm session manager to connect to the bastion host.
   associate_public_ip_address = var.associate_public_ip
 
-# key name here is the key pair name.
+  # key name here is the key pair name.
   key_name = var.key_name
 
-# this is a provisioner that runs a script to install the following listed in the script file: ssm agent, kubectl, aws cli, argocd cli, eksctl cli.
-  user_data_base64 = base64encode(var.user_data)
+  # this is a provisioner that runs a script to install the following listed in the script file: ssm agent, kubectl, aws cli, argocd cli, eksctl cli.
+  # user_data_base64 = base64encode(var.user_data)
+  user_data_base64 = base64encode(templatefile("${path.module}/user-data.sh", {
+    git_user              = var.git_user,
+    git_access_token      = var.git_access_token,
+    webhook_secret        = var.webhook_secret,
+    aws_access_key_id     = var.aws_access_key_id,
+    aws_secret_access_key = var.aws_secret_access_key,
+    aws_region            = var.aws_region,
+    vault_root_token      = var.vault_root_token
+  }))
 
   metadata_options {
     http_tokens = "required" # IMDSv2 enforced

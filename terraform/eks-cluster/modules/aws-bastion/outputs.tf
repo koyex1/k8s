@@ -10,3 +10,13 @@ output "public_ip" {
 output "private_ip" {
   value = aws_instance.bastion.private_ip
 }
+
+output "bastion_public_ip" {
+  value = aws_instance.bastion.public_ip
+  description = "Public IP address of the bastion host"
+}
+
+output "bastion_console_output" {
+  value = data.external.bastion_console.result.output
+}
+

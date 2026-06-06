@@ -23,6 +23,24 @@ cd - cd ec2 with ssh(to do docker run), cd ec2 with ssh(to do npm start)
 - for k apply or helm install you use kubectl set image as a run command in your cd pipeline.
 - for argocd you use gitaction variables on your images. where you use image: imageName:${{github_commit_sha}}
 
+# deploying applicaitons
+either the server is prepared for you(e.g using terraform to launch an ec2 instance and installing runtime environment, pm2, for monolith app, or to lauch eks for microservice apps) or the server is not prepare for you and you setup runtime etc during cd (slow deployment though)
+
+# next container, helm, kubernetes deployment files ( 2 simple rules SS(server & source of truth))
+it is either you are editing right in the server (most - using flags like set image, using sed, using yq, using TAG=v1.2 for docker compose, helm with either its values.yaml file or --set flag) or you are editing it from github(argocd, fluxcd).
+#set image used in k8s for setting image key value
+#sed stream editor for search a file and replacing
+#helm render template generates a static deployment yaml file from your values.yaml and template. then you can now kubectl apply this static file. otherwise you can just use helm straight to deploy
+#avoid these because they are not prod friendly - kubectl run, dry-run, docker run, kubectl create.
+# so to version the changes without gitops you will do a git push of your current deployment to github > template, template manifest, 
+# with argocd cd is completely taken out of gitaction pipeline.
+
+
+# 0. gitaction deployment examples
+https://docs.github.com/en/actions/how-tos/deploy/deploy-to-third-party-platforms/azure-kubernetes-service
+
+${{ github.event.workflow_run.conclusion == 'success' }} && 
+
 
 # 1. KUBECTL DIRECT DEPLOY (CI → CLUSTER)
 name: kubectl-cd
@@ -198,6 +216,144 @@ jobs:
             ${{ matrix.service }}=myrepo/${{ matrix.service }}:${{ github.sha }}
 
           kubectl rollout status deployment/${{ matrix.service }}
+# using git checkout + kubectl
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG }}" > ~/.kube/config
+
+      - name: Deploy to Kubernetes
+        run: |
+          cd kubernetes/manifests
+          
+          # Update image tag (using sed or yq)
+          sed -i "s|image: myapp:.*|image: myapp:${{ github.sha }}|g" deployment.yaml
+          
+          # Apply all manifests
+          kubectl apply -f deployment.yaml
+          kubectl apply -f service.yaml
+          kubectl apply -f configmap.yaml
+          
+          # Wait for rollout
+          kubectl rollout status deployment/myapp --timeout=5m
+
+# using git checkout + helm
+jobs: what can trigger this buid can be success from ci or change from kubenetes dir in your repo(here you will not need to set or sed any value because you would have made does changes before git pushing)
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+
+      - name: Set up kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG }}" > ~/.kube/config
+
+      - name: Deploy with Helm
+        run: |
+          cd kubernetes/chart
+          
+          # Helm handles the image tag replacement natively
+          helm upgrade --install myapp ./ \
+            --set image.tag=${{ github.sha }} \
+            --set image.repository=myregistry/myapp \
+            --namespace default \
+            --wait \
+            --timeout 5m
+
+
+# continuos deliver via jenkins, gitaction and api(through your own custom dashboards)
+// Jenkins pipeline - requires manual click to run
+pipeline {
+    parameters {
+        string(name: 'VERSION', defaultValue: 'latest', description: 'Image tag to deploy')
+        choice(name: 'ENV', choices: ['dev', 'staging', 'prod'], description: 'Target environment')
+    }
+    stages {
+        stage('Deploy') {
+            steps {
+                sh "helm upgrade --install myapp ./chart --set image.tag=${params.VERSION}"
+            }
+        }
+    }
+}
+
+
+curl -X POST \
+  -H "Authorization: token $GITHUB_TOKEN" \
+  -H "Accept: application/vnd.github.v3+json" \
+  https://api.github.com/repos/owner/repo/actions/workflows/manual-deploy.yml/dispatches \
+  -d '{
+    "ref": "main",
+    "inputs": {
+      "environment": "staging",
+      "version": "v1.2.3"
+    }
+  }'
+
+
+
+# .github/workflows/manual-deploy.yml
+name: Manual Deployment (Continuous Delivery)
+
+on:
+  workflow_dispatch:  # 👈 THIS is your "Build with Parameters" button
+    inputs:
+      environment:
+        description: 'Where to deploy'
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - production
+      version:
+        description: 'Image tag or commit SHA'
+        required: true
+        default: 'latest'
+      replicas:
+        description: 'Number of replicas'
+        required: false
+        default: '3'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Deploy selected version
+        run: |
+          helm upgrade --install myapp ./chart \
+            --namespace ${{ github.event.inputs.environment }} \
+            --set image.tag=${{ github.event.inputs.version }} \
+            --set replicas=${{ github.event.inputs.replicas }}
+      
+      - name: Verify deployment
+        run: |
+          kubectl rollout status deployment/myapp \
+            --namespace ${{ github.event.inputs.environment }}
+
+# on differnt environments pipeline
+for terraform i have to change directory, or use workspace command to change workspace
+for k8s i have to use set flag with different value.yaml file
+for cd i have to use conditonal functions based on inputs [dev, test, staging, prod] and then for each condition set flag with differnt value.yaml file.
+
+# git flow
+feature branch--merged request --> dev branch --mr--> test branch --mr --> staging branch --mr--> main/prod branch
+now: feature branch --mr--> main branch(input filters for dev, test, staging, prod)
 
 
 # just disvoered

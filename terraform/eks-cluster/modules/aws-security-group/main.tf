@@ -8,39 +8,61 @@ module "bastion_sg" {
   vpc_id      = var.vpc_id
 
   ingress_rules = ["ssh-tcp"] # in here you fill in type and protocol and port and the string for these 3 if i use a different port number of 667 will be ssh-tcp-667. the protocol and port in the web ui is usually greyed out.
+  ingress_with_cidr_blocks = [
+    {
+      from_port   = 18200
+      to_port     = 18200
+      protocol    = "tcp"
+      description = "Vault UI/API"
+      cidr_blocks = "0.0.0.0/0"
+    },
+    {
+      from_port   = 4141
+      to_port     = 4141
+      protocol    = "tcp"
+      description = "Atlantis UI/Webhook"
+      cidr_blocks = "0.0.0.0/0"
+    }
+  ]
 
   ingress_cidr_blocks = var.allowed_ssh_cidr #this is the source of the traffic that is allowed to access the bastion host. in this case, we are allowing SSH access from anywhere as indicated by default value of 0.0.0.0
-
-  egress_rules = ["all-all"]
+  egress_rules        = ["all-all"]
 
   tags = {
     Name = "bastion-sg-${var.env}"
   }
 }
 
-resource "aws_security_group_rule" "bastion_to_eks" {
+resource "aws_security_group_rule" "bastion_https_to_eks" {
+  security_group_id = var.cluster_security_group_id
+
   type                     = "ingress"
+  source_security_group_id = module.bastion_sg.security_group_id
   from_port                = 443
   to_port                  = 443
   protocol                 = "tcp"
-
-  security_group_id       = var.cluster_security_group_id
-  source_security_group_id = module.bastion_sg.security_group_id
 }
 
-resource "aws_security_group_rule" "ssh_to_nodes" {
+resource "aws_security_group_rule" "git_pc_https_to_eks" {
+  security_group_id = var.cluster_security_group_id
+  
+  type              = "ingress"
+  cidr_blocks       = ["0.0.0.0/0"]
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+}
+
+resource "aws_security_group_rule" "bastion_ssh_to_nodes" {
   type                     = "ingress"
+  source_security_group_id = module.bastion_sg.security_group_id
   from_port                = 22
   to_port                  = 22
-  protocol                 = "tcp"
-
   security_group_id        = var.nodes_security_group_id
-  source_security_group_id = module.bastion_sg.security_group_id
+  protocol                 = "tcp"
 }
 
-
-
-# Allow nodes to communicate with each other for VPC-CNI pod networking
+# Allow des to communicate with each other for VPC-CNI pod networking
 # resource "aws_security_group_rule" "nodes_ingress_self" {
 #   type                     = "ingress"
 #   from_port                = 0
@@ -92,9 +114,6 @@ resource "aws_security_group_rule" "ssh_to_nodes" {
 #     Name = "eks-cluster-sg-${var.env}"
 #   }
 # }
-
-
-
 
 # resource "aws_security_group" "eks-cluster-sg" {
 #   name        = "eks-cluster-sg-${var.env}"

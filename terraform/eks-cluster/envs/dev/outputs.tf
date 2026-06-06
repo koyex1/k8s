@@ -28,6 +28,7 @@ output "karpenter_role_arn" {
 
 output "eks" {
     value = module.eks
+    sensitive = true
 }
 
 output "cluster_name" {
@@ -40,10 +41,19 @@ output "cluster_endpoint" {
 
 output "cluster_ca" {
     value = module.eks.cluster_ca
+    sensitive = true
 }
 
 output "eks_cluster_token" {
     value = data.aws_eks_cluster_auth.cluster.token
     sensitive = true
+}
+
+output "bastion_public_ip" {
+    value = module.bastion.bastion_public_ip
+}
+
+output "bastion_console_output" {
+    value = module.bastion.bastion_console_output
 }
 

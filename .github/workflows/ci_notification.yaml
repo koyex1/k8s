@@ -101,7 +101,7 @@ jobs:
     uses: ./.github/workflows/reuse_build_scan.yaml
     with:
       service-path: services/notification
-      image_name: notification-service
+      image_name: koyex1/notification-service
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

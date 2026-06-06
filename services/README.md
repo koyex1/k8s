@@ -8,3 +8,4 @@ order - add order, list order.
 #ignore the opentelemetry/APM(traces) or node(metrics). Atleast not for now
 #interested only in promtail(logs)
 
+# docker run --rm --entrypoint id ghcr.io/runatlantis/atlantis:latest. give the user info

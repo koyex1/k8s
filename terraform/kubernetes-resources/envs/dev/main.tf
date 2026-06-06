@@ -18,22 +18,22 @@ module "argocd" {
   argo_dependency = [ module.alb-controller ]
 }
 
-module "atlantis" {
-  source = "../../modules/helm-atlantis"
+# module "atlantis" {
+#   source = "../../modules/helm-atlantis"
 
-  region = local.aws_tf_state.region
+#   region = local.aws_tf_state.region
 
-  repo_allowlist = "github.com/koyex1/k8s"
+#   repo_allowlist = "github.com/koyex1/k8s"
 
-  #github credentials for atlantis to access the repo and manage PRs. Make sure to store these securely and not hardcode in production.
+#   #github credentials for atlantis to access the repo and manage PRs. Make sure to store these securely and not hardcode in production.
+#   github_user          
   
-  
-  terraform_version = "1.14.8"
+#   terraform_version = "1.14.8"
 
-  atlantis_url = "http://your-atlantis-url" 
+#   atlantis_url = "http://your-atlantis-url" 
 
-  alb_dependency = module.alb-controller
-}
+#   alb_dependency = module.alb-controller
+# }
 
 module karpenter {
   source = "../../modules/helm-karpenter"

@@ -1,0 +1,27 @@
+name: Deploy products
+
+on:
+  workflow_run:
+    workflows: ["ci products"]
+    types:
+      - completed #others are requested, waiting, in_progress, completed.
+  
+jobs:
+  deploy:
+    defaults:
+      run:
+        working-directory: ${{ inputs.resource-path }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [dev, test, staging, production]
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    #if: ${{ github.event.inputs.app_environment == 'dev' }} || ${{ github.event.inputs.app_environment == 'all-environments' }}
+    steps:
+      - uses: .github/workflows/actions/composite_deploy
+        with:
+          app_environment: "${{ matrix.environment }}"
+          chart_path: "./products-chart"
+          service: "products"
+          image_repository: "koyex1/products"
+          image_tag: "${{ github.event.workflow_run.head_sha }}" 
