@@ -43,7 +43,7 @@ jobs:
           name: java-test-report
           path: services/register/target/surefire-reports/
 
-  sonar: #correction 8. removed if: false from sonar job to enable it.
+  sonar: #correction 8. removed if:. false from sonar job to enable it.
     if: false
     runs-on: ubuntu-latest
     defaults:
