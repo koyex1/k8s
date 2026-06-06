@@ -37,7 +37,7 @@ jobs:
           docker tag ${{ inputs.image_name }}:${{ github.sha }} ${{ inputs.image_name }}:latest
 
       - name: Trivy Image Scan (SBOM) #Software Bill of Materials
-        uses: aquasecurity/trivy-action@0.20.0
+        uses: aquasecurity/trivy-action@0.36.0
         with:
           image-ref: ${{ inputs.image_name }}:${{ github.sha }}
           format: cyclonedx
@@ -51,7 +51,7 @@ jobs:
           path: sbom.json
 
       - name: Trivy Image Scan (JSON)
-        uses: aquasecurity/trivy-action@0.20.0
+        uses: aquasecurity/trivy-action@0.36.0
         with:
           image-ref: ${{ inputs.image_name }}:${{ github.sha }}
           format: json
@@ -66,7 +66,7 @@ jobs:
           path: trivy-image-report.json
 
       - name: Trivy Image Scan (SARIF) #Static Analysis Results Interchange Format
-        uses: aquasecurity/trivy-action@0.20.0
+        uses: aquasecurity/trivy-action@0.36.0
         with:
           image-ref: ${{ inputs.image_name }}:${{ github.sha }}
           format: sarif
